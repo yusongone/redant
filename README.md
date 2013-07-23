@@ -1,4 +1,4 @@
 redant
 ======
 
-a game engine
+a game engine of javascript
