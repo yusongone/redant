@@ -30,6 +30,8 @@
 								stage.addSpirit(t);
 								//	t.walk();
 								t.click(function(){
+									this.fire();
+									return false;
 								});
 					bindEvent(t);
 
@@ -38,25 +40,40 @@
 			}
 
 					function zd(stage){
+						this.stage=stage;
 						this.width=20;
 						this.height=20;
+						SG.getSpirit().call(this,stage);
 					}
+					SG.extendSpirit(zd);
 					zd.prototype.init=function(){
-						this.setDraw("fire",function(){
-							
+							this.state="run";
+							var that=this;
+						this.setDraw("run",function(ctx){
+							ctx.beginPath();
+							ctx.strokeRect(that.offsetX,that.offsetY,that.width,that.height);
+							ctx.closePath();
 						});
-					}
+					};
 					function Tank(stage,x,y){
 						this.name=SG.getRandom();
 						this.stage=stage;
 						this.width=36;
 						this.height=65;
 						this.setLocal(x,y);
-						SG.getSpirit().call(this);
-						this.setDrawData();
+						SG.getSpirit().call(this,stage);
 					};
 					SG.extendSpirit(Tank);
-					Tank.prototype.setDrawData=function(json){
+					Tank.prototype.fire=function(json){
+						this.zd=new zd(this.stage);
+						this.zd.setLocal(this.localX+0.5,this.localY+0.5);
+						var that=this;
+						this.zd.moveTo(100,100,30,function(){
+							delete that.zd;
+							this.distroy();
+						});
+					};
+					Tank.prototype.init=function(json){
 							var drawdata={};
 							this.state="walk";
 							this.setDraw("walk",{

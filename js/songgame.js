@@ -39,7 +39,7 @@ pagePrivate.SongGame=(function(){
 	var Stage=(function(){
 	var _getSpiritAryByLocal=function(SpiritAry,x,y,bool){
 		var ary=[];
-		for(var i=0,l=SpiritAry.length;i<l;i++){
+		for(var i=SpiritAry.length-1,l=0;i>-1;i--){
 			if(SpiritAry[i].isInLocal(x,y)){
 				ary.push(SpiritAry[i]);
 				if(bool){
@@ -55,14 +55,17 @@ pagePrivate.SongGame=(function(){
 				var x=evt.offsetX,
 					y=evt.offsetY;
 			var spiritAry=_getSpiritAryByLocal(stage.SpiritAry,x,y);
+			for(var i=0,l=spiritAry.length;i<l;i++){
+				var d=spiritAry[i].triggerClick();
+				if(d===false){
+					return ;
+				}
+			}
 			if(stage.events["click"]){
 				var d=stage.events["click"]({"x":x,"y":y});
 				if(d===false){
 				return ;
 				};
-			}
-			for(var i=0,l=spiritAry.length;i<l;i++){
-				spiritAry[i].triggerClick();
 			}
 		},false);
 	};
@@ -81,8 +84,8 @@ pagePrivate.SongGame=(function(){
 		_bindEvent(this);
 		this.Animation.addAnimate("a",function(){
 			that.ctx.clearRect(0,0,that.ctx.canvas.width,that.ctx.canvas.height);
-			window.scrollTo(0,1);
-									ctx.fillText(cha,100,100);
+			//temp show frame speed
+			ctx.fillText(cha,100,100);
 		});
 	}
 	stage.prototype.bindEvent=function(eventName,fun){
@@ -120,24 +123,30 @@ pagePrivate.SongGame=(function(){
 					can.width=singleWidth+1;
 					can.height=singleHeight+1;
 				ctx.beginPath();
-				ctx.drawImage(data.img,offsetX+(i*singleWidth),offsetY,singleWidth,data.singleHeight,0,0,singleWidth,singleHeight);
+				ctx.drawImage(data.img,offsetX+(i*singleWidth),offsetY,singleWidth,data.singleHeight,0,0,that.width,that.height);
 			ctx.lineWidth=1;
-			ctx.strokeRect(0.5,0.5,singleWidth,singleHeight);
+			ctx.strokeRect(0.5,0.5,that.width,that.height);
 				ctx.closePath();
 				ary.push(can);
 			}
 			return ary;
 		}
-	function spirit(){
+	function spirit(stage){
+		this.name=SG.getRandom();
 		var that=this;
 		this.drawfun={};
-		this.state;
+		this.state=stage;
+		this.frameFunList={};
 		this.stage.addAnimate(this.name+"run",function(){that.drawSelf()});
+		this.init();
 	};
+	spirit.prototype.distroy=function(name,fun){
+			this.stage.removeAnimate(this.name+"run");
+	}
 	spirit.prototype.isInLocal=function(x,y){
 		var myX=this.localX,myY=this.localY;
 		var w=this.width/2,h=this.height/2;
-		if(Math.abs(myX-x)<w&&Math.abs(myY-y)<h){
+		if((Math.abs(myX-x)<w)&&(Math.abs(myY-y)<h)){
 			return true;
 		};
 		return false;
@@ -170,14 +179,37 @@ pagePrivate.SongGame=(function(){
 			ctx.fill();
 		}
 	};
+	spirit.prototype.addFrameFun=function(name,fun){
+		this.frameFunList[name]=fun;
+	};
+	spirit.prototype.removeFrameFun=function(name,fun){
+		delete this.frameFunList[name];
+	};
 	spirit.prototype.setDrawByFunction=function(name,fun){
 			this.drawfun[name]=fun;
 	}
+	spirit.prototype.moveTo=function(x,y,speed,fun){
+			var that=this;
+			var count=0;
+			this.addFrameFun("moveTo",function(){
+				var k=x/y;
+				that.offsetX+=2;
+				count++;
+				if(count==99){
+					that.removeFrameFun("moveTo");	
+					fun?fun.call(that):"";
+				}
+			});
+	};
 	spirit.prototype.drawSelf=function(){
 		var ctx=this.stage.ctx;
 		if(this.drawfun[this.state]){
 			this.drawfun[this.state](ctx);
 		};
+		var list=this.frameFunList;
+		for(var i in list){
+			list[i]();
+		}
 	};
 	spirit.prototype.setLocal=function(x,y){
 		this.localX=x;
@@ -190,7 +222,7 @@ pagePrivate.SongGame=(function(){
 	};
 	spirit.prototype.triggerClick=function(){
 		if(this.clicker){
-			this.clicker(this);
+			return this.clicker(this);
 		}
 	};
 	spirit.prototype.addDrawFun=function(key,fun){
