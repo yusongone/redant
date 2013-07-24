@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>abf</title>
+		<style>
+			*{margin:0;padding:0;}
+		</style>
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0, maximum-scale=1">
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<script src="/js/jquery.js"></script>
+		<script src="/js/songgame.js"></script>
+		<script>
+			var SG=pagePrivate.SongGame;
+			function init(){
+				var imgData={
+						"people":"/image/people.jpg"
+						,"lb":"/image/lb.jpg"
+				}
+					SG.config({
+						"box":document.getElementById("box")
+					});
+					SG.loadImg(imgData,function(){
+						var stage=SG.createStage("song");
+							SG.changeStage(stage);
+							var t=new Tank(stage,200,200);
+							stage.addSpirit(t);
+							t.click(function(){
+								this.fire();
+								return false;
+							});
+							stage.bindEvent("click",function(evt){
+									t.moveTo(evt.x,evt.y,3);
+							});
+							bindEvent(t);
+					});
+			}
+//子弹
+					function zd(stage){
+						this.stage=stage;
+						this.width=20;
+						this.height=20;
+						SG.getSpirit().call(this,stage);
+					}
+					SG.extendSpirit(zd);
+					zd.prototype.init=function(){
+							this.state="run";
+							var that=this;
+							var can=document.createElement("canvas");	
+							var ctx=can.getContext("2d");
+								ctx.fillRect(0,0,20,20);
+								ctx.fillStyle="red";
+								ctx.fillRect(21,0,20,20);
+								ctx.fillStyle="blue";
+								ctx.fillRect(41,0,20,20);
+							this.setDraw("run",{
+								img:can,
+								offsetX:0,
+								offsetY:0,
+								singleWidth:20,
+								singleHeight:20,
+								imgCount:3,
+								delay:3
+							});
+					};
+//坦克
+					function Tank(stage,x,y){
+						this.name=SG.getRandom();
+						this.stage=stage;
+						this.width=36;
+						this.height=65;
+						this.setLocal(x,y);
+						SG.getSpirit().call(this,stage);
+					};
+					SG.extendSpirit(Tank);
+					Tank.prototype.fire=function(json){
+						this.zd=new zd(this.stage);
+						this.zd.setLocal(this.localX+0.5,this.localY+0.5);
+						var that=this;
+						this.zd.moveTo(100,100,20,function(){
+							delete that.zd;
+							this.distroy();
+						});
+					};
+					Tank.prototype.init=function(json){
+							var drawdata={};
+							this.state="walk";
+							this.setDraw("walk",{
+								img:SG.Image.people,
+								offsetX:30,
+								offsetY:10,
+								singleWidth:47,
+								singleHeight:85,
+								imgCount:5,
+								delay:9
+							});
+							this.setDraw("run",{
+								img:SG.Image.lb,
+								offsetX:90,
+								offsetY:10,
+								singleWidth:47,
+								singleHeight:85,
+								imgCount:5,
+								delay:9
+							});
+							this.setDraw("jump",{
+								img:SG.Image.lb,
+								offsetX:30,
+								offsetY:10,
+								singleWidth:47,
+								singleHeight:85,
+								imgCount:5,
+								delay:9
+							})
+					}
+								
+			function bindEvent(t){
+				document.addEventListener("keydown",function(event){
+						if(event.keyCode==32){
+							t.fire();
+							return false;
+						}else if(event.keyCode==39){
+							t.state="walk";
+						}else if(event.keyCode==37){
+							var canva=t.stage.canva;
+							canva.webkitRequestFullScreen();
+						};
+				});
+			}
+
+			
+		</script>
+	</head>
+	<body onload="init()">
+			<div id="box">
+			</div>
+	</body>
+</html>
