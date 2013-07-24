@@ -5,7 +5,8 @@ pagePrivate.SongGame=(function(){
 	 *Animate
 	 * */
 	var RAF=window.mozRequestAnimationFrame||window.requestAnimationFrame||window.webkitRequestAnimationFrame;
-	function Animation(){
+	var Animation=(function(){
+	function animation(){
 		this.funAry={};
 		var that=this;
 		var setAni=function(){
@@ -26,12 +27,14 @@ pagePrivate.SongGame=(function(){
 		};
 		dod();
 	}
-	Animation.prototype.addAnimate=function(key,fun){
+	animation.prototype.addAnimate=function(key,fun){
 		this.funAry[key]=fun;	
 	};
-	Animation.prototype.removeAnimate=function(key,fun){
+	animation.prototype.removeAnimate=function(key,fun){
 		delete this.funAry[key];	
 	};
+	return animation;
+	})();
 
 	/*
 	 *Stage
@@ -72,8 +75,8 @@ pagePrivate.SongGame=(function(){
 	function stage(){
 		var canva=document.createElement("canvas");
 			var ss=SG.getScreenSize();
-			canva.width=ss.width;
-			canva.height=ss.height;
+			canva.width=500;
+			canva.height=500;
 			canva.style.border="1px solid red";
 		this.canva=canva;
 		this.ctx=canva.getContext("2d");
@@ -84,8 +87,6 @@ pagePrivate.SongGame=(function(){
 		_bindEvent(this);
 		this.Animation.addAnimate("a",function(){
 			that.ctx.clearRect(0,0,that.ctx.canvas.width,that.ctx.canvas.height);
-			//temp show frame speed
-			ctx.fillText(cha,100,100);
 		});
 	}
 	stage.prototype.bindEvent=function(eventName,fun){
@@ -164,13 +165,13 @@ pagePrivate.SongGame=(function(){
 			return;
 		}
 		var data=_drawData;
-		var count=data.imgCount,step=data.delay,a=0,i=0,c=0;
+		var count=data.imgCount,delay=data.delay,a=0,i=0,c=0;
 		var ary=_cacheCanvas(data,this);
 
 
 		that.drawfun[name]=function(ctx){
 			a++;
-			if(a==step){
+			if(a==delay){
 				a=0;i++;count==i?i=0:"";
 			}
 			ctx.beginPath();
@@ -188,14 +189,25 @@ pagePrivate.SongGame=(function(){
 	spirit.prototype.setDrawByFunction=function(name,fun){
 			this.drawfun[name]=fun;
 	}
-	spirit.prototype.moveTo=function(x,y,speed,fun){
+	spirit.prototype.moveTo=function(x,y,_speed,fun){
 			var that=this;
-			var count=0;
+			var speed=_speed||1;
+			var x1=this.localX;
+			var y1=this.localY;
+			var Xl=(x-x1);
+			var Yl=(y-y1);
+			var jl=Math.pow(Yl,2)+Math.pow(Xl,2);
+			var d=Math.sqrt(jl);
+			var step=0;
+			var count=parseInt(d/speed);
 			this.addFrameFun("moveTo",function(){
-				var k=x/y;
-				that.offsetX+=2;
-				count++;
-				if(count==99){
+				step++;
+				x1=x1+Xl*(1/d)*speed;
+				y1=y1+Yl*(1/d)*speed;
+				that.setLocal(x1,y1);
+				if(step==count){
+						console.log(x1,y1);
+					that.setLocal(x,y);
 					that.removeFrameFun("moveTo");	
 					fun?fun.call(that):"";
 				}
@@ -249,6 +261,7 @@ pagePrivate.SongGame=(function(){
 				return sj;
 			};
 	}
+
 	var songgame={
 		"getScreenSize":function(){
 				window.scrollTo(0,1);
