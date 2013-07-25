@@ -25,12 +25,14 @@
 							SG.changeStage(stage);
 							var t=new Tank(stage,200,200);
 							stage.addSpirit(t);
+							window.t=t;
 							t.click(function(){
 								this.fire();
 								return false;
 							});
 							stage.bindEvent("click",function(evt){
-									t.moveTo(evt.x,evt.y,3);
+									t.moveTo(evt.x,evt.y,3,function(){
+									});
 							});
 							bindEvent(t);
 					});
@@ -38,8 +40,8 @@
 //子弹
 					function zd(stage){
 						this.stage=stage;
-						this.width=20;
-						this.height=20;
+						this.width=10;
+						this.height=10;
 						SG.getSpirit().call(this,stage);
 					}
 					SG.extendSpirit(zd);
@@ -48,18 +50,16 @@
 							var that=this;
 							var can=document.createElement("canvas");	
 							var ctx=can.getContext("2d");
-								ctx.fillRect(0,0,20,20);
 								ctx.fillStyle="red";
-								ctx.fillRect(21,0,20,20);
-								ctx.fillStyle="blue";
-								ctx.fillRect(41,0,20,20);
+								ctx.arc(5,5,5,0,2*Math.PI,false);
+								ctx.fill();
 							this.setDraw("run",{
 								img:can,
 								offsetX:0,
 								offsetY:0,
 								singleWidth:20,
 								singleHeight:20,
-								imgCount:3,
+								imgCount:1,
 								delay:3
 							});
 					};
@@ -67,8 +67,8 @@
 					function Tank(stage,x,y){
 						this.name=SG.getRandom();
 						this.stage=stage;
-						this.width=36;
-						this.height=65;
+						this.width=30;
+						this.height=30;
 						this.setLocal(x,y);
 						SG.getSpirit().call(this,stage);
 					};
@@ -77,14 +77,14 @@
 						this.zd=new zd(this.stage);
 						this.zd.setLocal(this.localX+0.5,this.localY+0.5);
 						var that=this;
-						this.zd.moveTo(100,100,20,function(){
+						this.zd.moveTo(250,250,20,function(){
 							delete that.zd;
 							this.distroy();
 						});
 					};
 					Tank.prototype.init=function(json){
 							var drawdata={};
-							this.state="walk";
+							this.state="run";
 							this.setDraw("walk",{
 								img:SG.Image.people,
 								offsetX:30,
@@ -94,14 +94,30 @@
 								imgCount:5,
 								delay:9
 							});
+							var can=document.createElement("canvas");	
+							var ctx=can.getContext("2d");
+								ctx.beginPath();
+								ctx.lineWidth=2;
+								ctx.translate(15,15);
+								ctx.strokeStyle="blue";
+								ctx.arc(0,0,10,0,2*Math.PI,false);
+								ctx.closePath();
+								ctx.stroke();
+								ctx.beginPath();
+								ctx.strokeStyle="red";
+								ctx.arc(30,0,10,0,2*Math.PI,false);
+								ctx.moveTo(0,0);;
+								ctx.lineTo(0,-15);
+								ctx.closePath();
+								ctx.stroke();
 							this.setDraw("run",{
-								img:SG.Image.lb,
-								offsetX:90,
-								offsetY:10,
-								singleWidth:47,
-								singleHeight:85,
-								imgCount:5,
-								delay:9
+								img:can,
+								offsetX:0,
+								offsetY:0,
+								singleWidth:30,
+								singleHeight:30,
+								imgCount:2,
+								delay:10
 							});
 							this.setDraw("jump",{
 								img:SG.Image.lb,

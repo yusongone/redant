@@ -5,15 +5,24 @@ pagePrivate.SongGame=(function(){
 	 *Animate
 	 * */
 	var RAF=window.mozRequestAnimationFrame||window.requestAnimationFrame||window.webkitRequestAnimationFrame;
-	var Animation=(function(){
-	function animation(){
+	var FrameTime=(function(){
+	function animation(ctx){
+		this.canvasObjList={};
 		this.funAry={};
 		var that=this;
+		var cList=that.canvasObjList;
 		var setAni=function(){
 			for(var i in that.funAry){
 				that.funAry[i]();
 			}	
-		//	window.requestAnimationFrame(dod);
+			for(var i in cList){
+				var c=cList[i];
+				ctx.beginPath();
+				ctx.drawImage(c.canvas,c.x.toFixed(3),c.y.toFixed(3));
+
+				ctx.arc(250,250,10,2*Math.PI,false);
+				ctx.fill();
+			};
 			RAF(dod);
 		};
 		var time=0;
@@ -27,11 +36,17 @@ pagePrivate.SongGame=(function(){
 		};
 		dod();
 	}
-	animation.prototype.addAnimate=function(key,fun){
+	animation.prototype.addFunToFrame=function(key,fun){
 		this.funAry[key]=fun;	
 	};
-	animation.prototype.removeAnimate=function(key,fun){
+	animation.prototype.removeFunToFrame=function(key,fun){
 		delete this.funAry[key];	
+	}
+	animation.prototype.appendElement=function(key,canvasObj){
+		this.canvasObjList[key]=canvasObj;
+	};
+	animation.prototype.removeElement=function(key){
+		delete this.canvasObjList[key];
 	};
 	return animation;
 	})();
@@ -81,12 +96,12 @@ pagePrivate.SongGame=(function(){
 			canva.style.border="1px solid red";
 		this.canva=canva;
 		this.ctx=canva.getContext("2d");
-		this.Animation=new Animation();
+		this.Animation=new FrameTime(this.ctx);
 		this.SpiritAry=[];
 		this.events={};
 		var that=this;
 		_bindEvent.call(this);
-		this.Animation.addAnimate("a",function(){
+		this.Animation.addFunToFrame("clearRect",function(){
 			that.ctx.clearRect(0,0,that.ctx.canvas.width,that.ctx.canvas.height);
 		});
 	}
@@ -96,11 +111,11 @@ pagePrivate.SongGame=(function(){
 	stage.prototype.getCanva=function(){
 		return this.canva;
 	};
-	stage.prototype.addAnimate=function(key,fun){
-		this.Animation.addAnimate(key,fun);
+	stage.prototype.addAnimate=function(key,canvasObj){
+		this.Animation.appendElement(key,canvasObj);
 	};
 	stage.prototype.removeAnimate=function(key){
-		this.Animation.removeAnimate(key);
+		this.Animation.removeElement(key);
 	};
 	stage.prototype.addSpirit=function(spirit){
 		this.SpiritAry.push(spirit);
@@ -128,21 +143,19 @@ pagePrivate.SongGame=(function(){
 				ctx.beginPath();
 				ctx.drawImage(data.img,offsetX+(i*singleWidth),offsetY,singleWidth,data.singleHeight,0,0,that.width,that.height);
 			ctx.lineWidth=1;
-			ctx.strokeRect(0.5,0.5,that.width,that.height);
 				ctx.closePath();
-				ary.push(can);
+				ary.push({"canvas":can,"ctx":ctx});
 			}
 			return ary;
 		}
-	function _drawSelf(){
-		var ctx=this.stage.ctx;
-		if(this.drawfun[this.state]){
-			this.drawfun[this.state](ctx);
-		};
+	function _oneFrame(){
 		var list=this.frameFunList;
 		for(var i in list){
 			list[i]();
-		}
+		};
+		if(this.drawfun[this.state]){
+			return this.drawfun[this.state]();
+		};
 	};
 	function spirit(stage){
 		this.name=SG.getRandom();
@@ -150,11 +163,14 @@ pagePrivate.SongGame=(function(){
 		this.drawfun={};
 		this.state=stage;
 		this.frameFunList={};
-		this.stage.addAnimate(this.name+"run",function(){_drawSelf.call(that)});
+		var animate=stage.Animation;
+			animate.addFunToFrame(this.name+"run",function(){_oneFrame.call(that);});
 		this.init();
 	};
 	spirit.prototype.distroy=function(name,fun){
-			this.stage.removeAnimate(this.name+"run");
+			this.drawfun[this.state]=function(){};
+			this.stage.Animation.removeFunToFrame(this.name+"run");
+			this.stage.removeAnimate(this.name);
 	}
 	spirit.prototype.isInLocal=function(x,y){
 		var myX=this.localX,myY=this.localY;
@@ -181,15 +197,22 @@ pagePrivate.SongGame=(function(){
 		var ary=_cacheCanvas.call(this,data);
 
 
-		that.drawfun[name]=function(ctx){
+		that.drawfun[name]=function(){
 			a++;
 			if(a==delay){
 				a=0;i++;count==i?i=0:"";
 			}
-			ctx.beginPath();
-			ctx.drawImage(ary[i],that.offsetX,that.offsetY);
-			ctx.closePath();
-			ctx.fill();
+			var canvasObj=ary[i];
+				var can=canvasObj.canvas;
+				if(that.angle){
+					var tempCan=document.createElement("canvas");
+					var ctx=tempCan.getContext("2d");
+						ctx.translate(15,15);
+						ctx.rotate(Math.PI*2/360*that.angle);
+						ctx.drawImage(can,-15,-15);
+					can=tempCan;
+				}
+			that.stage.addAnimate(that.name,{"canvas":can,"x":that.offsetX,"y":that.offsetY});
 		}
 	};
 	spirit.prototype.addFrameFun=function(name,fun){
@@ -197,6 +220,19 @@ pagePrivate.SongGame=(function(){
 	};
 	spirit.prototype.removeFrameFun=function(name,fun){
 		delete this.frameFunList[name];
+	};
+	spirit.prototype.faceTo=function(x,y){
+		var x1=this.localX,
+			y1=this.localY;
+		var k=(y1-y)/(x1-x);
+		var al=Math.atan(k);
+		var v=x1>x?1:-1;
+		var angle=al*(360/2/Math.PI)+270*v;
+		this.rotateTo(angle);
+
+	};
+	spirit.prototype.rotateTo=function(_angle,fun){
+			this.angle=_angle;
 	};
 	spirit.prototype.moveTo=function(x,y,_speed,fun){
 			var that=this;
@@ -210,12 +246,12 @@ pagePrivate.SongGame=(function(){
 			var step=0;
 			var count=parseInt(d/speed);
 			this.addFrameFun("moveTo",function(){
+			t.faceTo(250,250);
 				step++;
 				x1=x1+Xl*(1/d)*speed;
 				y1=y1+Yl*(1/d)*speed;
 				that.setLocal(x1,y1);
 				if(step==count){
-						console.log(x1,y1);
 					that.setLocal(x,y);
 					that.removeFrameFun("moveTo");	
 					fun?fun.call(that):"";
