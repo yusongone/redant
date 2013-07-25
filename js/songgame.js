@@ -53,7 +53,8 @@ pagePrivate.SongGame=(function(){
 		return ary;
 			
 	};
-	var _bindEvent=function(stage){
+	var _bindEvent=function(){
+		var stage=this;
 		stage.canva.addEventListener("click",function(evt){
 				var x=evt.offsetX,
 					y=evt.offsetY;
@@ -84,7 +85,7 @@ pagePrivate.SongGame=(function(){
 		this.SpiritAry=[];
 		this.events={};
 		var that=this;
-		_bindEvent(this);
+		_bindEvent.call(this);
 		this.Animation.addAnimate("a",function(){
 			that.ctx.clearRect(0,0,that.ctx.canvas.width,that.ctx.canvas.height);
 		});
@@ -112,7 +113,8 @@ pagePrivate.SongGame=(function(){
 	 *spirit
 	 * */
 	var Spirit=(function(){
-		function _cacheCanvas(data,that){
+		function _cacheCanvas(data){
+			var that=this;
 			var ary=[];
 			var offsetX=data.offsetX,
 				offsetY=data.offsetY,
@@ -132,13 +134,23 @@ pagePrivate.SongGame=(function(){
 			}
 			return ary;
 		}
+	function _drawSelf(){
+		var ctx=this.stage.ctx;
+		if(this.drawfun[this.state]){
+			this.drawfun[this.state](ctx);
+		};
+		var list=this.frameFunList;
+		for(var i in list){
+			list[i]();
+		}
+	};
 	function spirit(stage){
 		this.name=SG.getRandom();
 		var that=this;
 		this.drawfun={};
 		this.state=stage;
 		this.frameFunList={};
-		this.stage.addAnimate(this.name+"run",function(){that.drawSelf()});
+		this.stage.addAnimate(this.name+"run",function(){_drawSelf.call(that)});
 		this.init();
 	};
 	spirit.prototype.distroy=function(name,fun){
@@ -166,7 +178,7 @@ pagePrivate.SongGame=(function(){
 		}
 		var data=_drawData;
 		var count=data.imgCount,delay=data.delay,a=0,i=0,c=0;
-		var ary=_cacheCanvas(data,this);
+		var ary=_cacheCanvas.call(this,data);
 
 
 		that.drawfun[name]=function(ctx){
@@ -209,16 +221,6 @@ pagePrivate.SongGame=(function(){
 					fun?fun.call(that):"";
 				}
 			});
-	};
-	spirit.prototype.drawSelf=function(){
-		var ctx=this.stage.ctx;
-		if(this.drawfun[this.state]){
-			this.drawfun[this.state](ctx);
-		};
-		var list=this.frameFunList;
-		for(var i in list){
-			list[i]();
-		}
 	};
 	spirit.prototype.setLocal=function(x,y){
 		this.localX=x;
