@@ -186,9 +186,6 @@ pagePrivate.SongGame=(function(){
 	spirit.prototype.removeFrameFun=function(name,fun){
 		delete this.frameFunList[name];
 	};
-	spirit.prototype.setDrawByFunction=function(name,fun){
-			this.drawfun[name]=fun;
-	}
 	spirit.prototype.moveTo=function(x,y,_speed,fun){
 			var that=this;
 			var speed=_speed||1;
