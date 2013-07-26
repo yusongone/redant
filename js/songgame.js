@@ -18,9 +18,20 @@ pagePrivate.SongGame=(function(){
 			for(var i in cList){
 				var c=cList[i];
 				ctx.beginPath();
-				ctx.drawImage(c.canvas,c.x.toFixed(3),c.y.toFixed(3));
-
+				if(c.angle){
+					var centerX=c.lx;
+					var centerY=c.ly;
+					ctx.save()
+					ctx.translate(centerX,centerY);
+					ctx.rotate(Math.PI*2/360*c.angle);
+					ctx.translate(-centerX,-centerY);
+					ctx.drawImage(c.canvas,c.x,c.y);
+					ctx.restore();
+				}else{
+					ctx.drawImage(c.canvas,c.x,c.y);
+				}
 				ctx.arc(250,250,10,2*Math.PI,false);
+				ctx.closePath();
 				ctx.fill();
 			};
 			RAF(dod);
@@ -144,17 +155,17 @@ pagePrivate.SongGame=(function(){
 				ctx.drawImage(data.img,offsetX+(i*singleWidth),offsetY,singleWidth,data.singleHeight,0,0,that.width,that.height);
 			ctx.lineWidth=1;
 				ctx.closePath();
-				ary.push({"canvas":can,"ctx":ctx});
+				ary.push({"canvas":can});
 			}
 			return ary;
 		}
 	function _oneFrame(){
 		var list=this.frameFunList;
 		for(var i in list){
-			list[i]();
+				list[i].call(this);
 		};
 		if(this.drawfun[this.state]){
-			return this.drawfun[this.state]();
+			return this.drawfun[this.state].call(this);
 		};
 	};
 	function spirit(stage){
@@ -202,24 +213,23 @@ pagePrivate.SongGame=(function(){
 			if(a==delay){
 				a=0;i++;count==i?i=0:"";
 			}
-			var canvasObj=ary[i];
-				var can=canvasObj.canvas;
-				if(that.angle){
-					var tempCan=document.createElement("canvas");
-					var ctx=tempCan.getContext("2d");
-						ctx.translate(15,15);
-						ctx.rotate(Math.PI*2/360*that.angle);
-						ctx.drawImage(can,-15,-15);
-					can=tempCan;
-				}
-			that.stage.addAnimate(that.name,{"canvas":can,"x":that.offsetX,"y":that.offsetY});
+			that.stage.addAnimate(that.name,{
+					"canvas":ary[i].canvas,
+					"x":that.offsetX,
+					"y":that.offsetY,
+					"lx":that.localX,
+					"ly":that.localY,
+					"angle":that.angle
+				});
 		}
 	};
 	spirit.prototype.addFrameFun=function(name,fun){
 		this.frameFunList[name]=fun;
 	};
 	spirit.prototype.removeFrameFun=function(name,fun){
+		this.deleteName=name;
 		delete this.frameFunList[name];
+		this.deleteName==null;
 	};
 	spirit.prototype.faceTo=function(x,y){
 		var x1=this.localX,
@@ -234,6 +244,11 @@ pagePrivate.SongGame=(function(){
 	spirit.prototype.rotateTo=function(_angle,fun){
 			this.angle=_angle;
 	};
+	spirit.prototype.checkHit=function(){
+		for(var i=0;i<10;i++){
+		
+		}
+	};
 	spirit.prototype.moveTo=function(x,y,_speed,fun){
 			var that=this;
 			var speed=_speed||1;
@@ -246,10 +261,9 @@ pagePrivate.SongGame=(function(){
 			var step=0;
 			var count=parseInt(d/speed);
 			this.addFrameFun("moveTo",function(){
-			t.faceTo(250,250);
 				step++;
-				x1=x1+Xl*(1/d)*speed;
-				y1=y1+Yl*(1/d)*speed;
+				x1+=Xl*(1/d)*speed;
+				y1+=Yl*(1/d)*speed;
 				that.setLocal(x1,y1);
 				if(step==count){
 					that.setLocal(x,y);
@@ -271,12 +285,6 @@ pagePrivate.SongGame=(function(){
 		if(this.clicker){
 			return this.clicker(this);
 		}
-	};
-	spirit.prototype.addDrawFun=function(key,fun){
-		this.drawFun[key]=fun;
-	};
-	spirit.prototype.add=function(){
-		
 	};
 	return spirit;
 	})();
