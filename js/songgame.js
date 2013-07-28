@@ -244,14 +244,24 @@ pagePrivate.SongGame=(function(){
 	spirit.prototype.rotateTo=function(_angle,fun){
 			this.angle=_angle;
 	};
-	spirit.prototype.checkHit=function(){
-		for(var i=0;i<10;i++){
-		
+	spirit.prototype.checkHit=function(Ary){
+		for(var i=0,l=Ary.length;i<l;i++){
+			var x=Ary[i].localX;
+			var y=Ary[i].localY;
+			var tempHeight=(Ary[i].height+this.height)/2;
+			var tempWidth=(Ary[i].width+this.width)/2;
+			var subWidth=Math.abs(x-this.localX)-tempWidth;
+			var subHeight=Math.abs(y-this.localY)-tempHeight;
+			if(subWidth<0&&subHeight<0){
+				return true;
+			};
+			//var spaceA=songgame.computeSpace(x,y,this.localX,this.localY);
 		}
 	};
-	spirit.prototype.moveTo=function(x,y,_speed,fun){
+	spirit.prototype.moveTo=function(x,y,Speed,fun){
 			var that=this;
-			var speed=_speed||1;
+			var _speed=Speed||1;
+			this.speed=_speed;
 			var x1=this.localX;
 			var y1=this.localY;
 			var Xl=(x-x1);
@@ -259,22 +269,23 @@ pagePrivate.SongGame=(function(){
 			var jl=Math.pow(Yl,2)+Math.pow(Xl,2);
 			var d=Math.sqrt(jl);
 			var step=0;
-			var count=parseInt(d/speed);
+			var count=parseInt(d/_speed);
+			var k=_speed/d;
 			this.addFrameFun("moveTo",function(){
 				step++;
-				x1+=Xl*(1/d)*speed;
-				y1+=Yl*(1/d)*speed;
+				x1+=Xl*k;
+				y1+=Yl*k;
 				that.setLocal(x1,y1);
 				if(step==count){
 					that.setLocal(x,y);
 					that.removeFrameFun("moveTo");	
 					fun?fun.call(that):"";
-				}
+				};
 			});
 	};
 	spirit.prototype.setLocal=function(x,y){
-		this.localX=x;
-		this.localY=y;
+		this.localX=x||this.localX;
+		this.localY=y||this.localY;
 		this.offsetX=this.localX-this.width/2;
 		this.offsetY=this.localY-this.height/2;
 	};
@@ -304,27 +315,34 @@ pagePrivate.SongGame=(function(){
 				return sj;
 			};
 	}
+	//compute space for double dot
+	var _computeSpace=function(x1,y1,x2,y2){
+			var jl=Math.pow(x2-x1,2)+Math.pow(y2-y1,2);
+			var d=Math.sqrt(jl);
+			return d;
+	};
 
 	var songgame={
-		"getScreenSize":function(){
+		getScreenSize:function(){
 				window.scrollTo(0,1);
 			return {"width":window.innerWidth,"height":screen.height};
 		},
-		"animateAry":{},
-		"Stages":{},
-		"getRandom":function(b,bool){
+		animateAry:{},
+		computeSpace:_computeSpace,
+		Stages:{},
+		getRandom:function(b,bool){
 			var js=_getRandom(b,bool);
 			return js;
 		},
-		"extend":function(sup,sub){
+		extend:function(sup,sub){
 			function temp(){};	
 			temp.prototype=sup.prototype;
 			temp.constructor=sub;
 			sub.prototype=new temp();
 		},
-		"Image":{},
-		"sound":{},
-		"loadImg":function(json,fun){
+		Image:{},
+		sound:{},
+		loadImg:function(json,fun){
 			var tempAry=[];
 			var that=this;
 			for(var i in json){
@@ -345,7 +363,7 @@ pagePrivate.SongGame=(function(){
 					}
 			}
 		},
-		"loadSound":function(json){
+		loadSound:function(json){
 		},
 		createAnimation:function(name){
 			if(this.animateAry[name]){
