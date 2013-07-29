@@ -161,12 +161,20 @@ pagePrivate.SongGame=(function(){
 		}
 	function _oneFrame(){
 		var list=this.frameFunList;
+		if(this.distroyStatus){
+			_distroyMyself.call(this);
+		}
 		for(var i in list){
 				list[i].call(this);
 		};
 		if(this.drawfun[this.state]){
 			return this.drawfun[this.state].call(this);
 		};
+	};
+	function _distroyMyself(){
+			this.drawfun[this.state]=function(){};
+			this.stage.Animation.removeFunToFrame(this.name+"run");
+			this.stage.removeAnimate(this.name);
 	};
 	function spirit(stage){
 		this.name=SG.getRandom();
@@ -179,9 +187,12 @@ pagePrivate.SongGame=(function(){
 		this.init();
 	};
 	spirit.prototype.distroy=function(name,fun){
+			this.distroyStatus=true;
+			/*
 			this.drawfun[this.state]=function(){};
 			this.stage.Animation.removeFunToFrame(this.name+"run");
 			this.stage.removeAnimate(this.name);
+			*/
 	}
 	spirit.prototype.isInLocal=function(x,y){
 		var myX=this.localX,myY=this.localY;

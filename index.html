@@ -37,9 +37,9 @@
 								}
 							});
 							stage.bindEvent("click",function(evt){
-								gz();
+							//	gz();
 								t.faceTo(evt.x,evt.y);
-								t.moveTo(evt.x,evt.y,2);
+							//	t.moveTo(evt.x,evt.y,2);
 								t.fire({"x":evt.x,"y":evt.y});
 								return false;
 							});
