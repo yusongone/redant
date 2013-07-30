@@ -168,7 +168,7 @@ pagePrivate.SongGame=(function(){
 			var temp=list[i];
 			if(!temp.time||temp.now==temp.time){
 				temp.fun.call(this);
-				temp.now==0;
+				temp.now=0;
 			}else{
 				temp.now++;
 			}
@@ -194,7 +194,10 @@ pagePrivate.SongGame=(function(){
 	};
 	spirit.prototype.distroy=function(name,fun){
 			this.distroyStatus=true;
-	}
+	};
+	spirit.prototype.getSiteInAngle=function(space){
+			var angle=this.angle;
+	};
 	spirit.prototype.isInLocal=function(x,y){
 		var myX=this.localX,myY=this.localY;
 		var w=this.width/2,h=this.height/2;
@@ -257,6 +260,7 @@ pagePrivate.SongGame=(function(){
 			this.angle=_angle;
 	};
 	spirit.prototype.checkHit=function(Ary,fun){
+		if(!Ary){return;};
 		for(var i=0,l=Ary.length;i<l;i++){
 			var x=Ary[i].localX;
 			var y=Ary[i].localY;

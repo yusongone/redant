@@ -39,9 +39,9 @@
 							var t2=new Tank(stage,400,1);
 							var t3=new Tank(stage,400,400);
 							var t4=new Tank(stage,1,400);
-						//	t4.addFrameFun("fire",function(){
-						//		t4.fire();//发射子弹需要目标坐标，这里需要计算；
-						//	},100);
+							t4.addFrameFun("fire",function(){
+								t4.fire({x:0,y:0});//发射子弹需要目标坐标，这里需要计算；
+							},100);
 							gz(t1);
 							gz(t2);
 							gz(t3);
