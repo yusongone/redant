@@ -163,9 +163,15 @@ pagePrivate.SongGame=(function(){
 		var list=this.frameFunList;
 		if(this.distroyStatus){
 			_distroyMyself.call(this);
-		}
+		};
 		for(var i in list){
-				list[i].call(this);
+			var temp=list[i];
+			if(!temp.time||temp.now==temp.time){
+				temp.fun.call(this);
+				temp.now==0;
+			}else{
+				temp.now++;
+			}
 		};
 		if(this.drawfun[this.state]){
 			return this.drawfun[this.state].call(this);
@@ -188,11 +194,6 @@ pagePrivate.SongGame=(function(){
 	};
 	spirit.prototype.distroy=function(name,fun){
 			this.distroyStatus=true;
-			/*
-			this.drawfun[this.state]=function(){};
-			this.stage.Animation.removeFunToFrame(this.name+"run");
-			this.stage.removeAnimate(this.name);
-			*/
 	}
 	spirit.prototype.isInLocal=function(x,y){
 		var myX=this.localX,myY=this.localY;
@@ -234,8 +235,8 @@ pagePrivate.SongGame=(function(){
 				});
 		}
 	};
-	spirit.prototype.addFrameFun=function(name,fun){
-		this.frameFunList[name]=fun;
+	spirit.prototype.addFrameFun=function(name,fun,time){
+		this.frameFunList[name]={"fun":fun,"time":time,"now":0};
 	};
 	spirit.prototype.removeFrameFun=function(name,fun){
 		this.deleteName=name;
@@ -255,7 +256,7 @@ pagePrivate.SongGame=(function(){
 	spirit.prototype.rotateTo=function(_angle,fun){
 			this.angle=_angle;
 	};
-	spirit.prototype.checkHit=function(Ary){
+	spirit.prototype.checkHit=function(Ary,fun){
 		for(var i=0,l=Ary.length;i<l;i++){
 			var x=Ary[i].localX;
 			var y=Ary[i].localY;
@@ -264,7 +265,8 @@ pagePrivate.SongGame=(function(){
 			var subWidth=Math.abs(x-this.localX)-tempWidth;
 			var subHeight=Math.abs(y-this.localY)-tempHeight;
 			if(subWidth<0&&subHeight<0){
-				return true;
+				var d=fun.call(this,Ary[i]);
+				if(d===false){return ;};
 			};
 			//var spaceA=songgame.computeSpace(x,y,this.localX,this.localY);
 		}
@@ -295,8 +297,8 @@ pagePrivate.SongGame=(function(){
 			});
 	};
 	spirit.prototype.setLocal=function(x,y){
-		this.localX=x||this.localX;
-		this.localY=y||this.localY;
+		this.localX=x||this.localX||0;
+		this.localY=y||this.localY||0;
 		this.offsetX=this.localX-this.width/2;
 		this.offsetY=this.localY-this.height/2;
 	};

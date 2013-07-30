@@ -28,31 +28,33 @@
 							window.t=t;
 							t.click(function(){
 							});
-							t.addFrameFun("c",function(){
-							//	this.faceTo(250,250);	
-								if(this.checkHit([tt])){
-								//	this.removeFrameFun("moveTo");
-								//	this.setLocal();
-								//	console.log("z");
-								}
-							});
 							stage.bindEvent("click",function(evt){
 							//	gz();
 								t.faceTo(evt.x,evt.y);
-							//	t.moveTo(evt.x,evt.y,2);
-								t.fire({"x":evt.x,"y":evt.y});
+								t.moveTo(evt.x,evt.y,2);
+								t.fire({"x":evt.x,"y":evt.y},[t1,t2,t3,t4]);
 								return false;
 							});
-							var tt=new Tank(stage,1,1);
-								function gz(){
-								tt.addFrameFun("c",function(){
-									this.faceTo(t.localX,t.localY);
-									var that=this;
-									this.moveTo(t.localX,t.localY,1,function(){
-											tt.removeFrameFun("c");
-									});
-								});
-						}
+							var t1=new Tank(stage,0,0);
+							var t2=new Tank(stage,400,1);
+							var t3=new Tank(stage,400,400);
+							var t4=new Tank(stage,1,400);
+						//	t4.addFrameFun("fire",function(){
+						//		t4.fire();//发射子弹需要目标坐标，这里需要计算；
+						//	},100);
+							gz(t1);
+							gz(t2);
+							gz(t3);
+							gz(t4);
+								function gz(obj){
+										obj.addFrameFun("c",function(){
+											this.faceTo(t.localX,t.localY);
+											var that=this;
+											this.moveTo(t.localX,t.localY,1,function(){
+													obj.removeFrameFun("c");
+											});
+										});
+								};
 							bindEvent(t);
 					});
 			}
@@ -92,8 +94,18 @@
 						SG.getSpirit().call(this,stage);
 					};
 					SG.extendSpirit(Tank);
-					Tank.prototype.fire=function(json){
+					Tank.prototype.fire=function(json,Ary){
+						var that=this;
 						this.zd=new zd(this.stage);
+						this.zd.addFrameFun("c",function(){
+								this.checkHit(Ary,function(tt){
+									this.setLocal();	
+									this.distroy();
+									tt.distroy();
+									return false;
+									//tt.moveTo(that.localX,that.localY);
+								});
+							});
 						this.zd.setLocal(this.localX+0.5,this.localY+0.5);
 						var that=this;
 						this.zd.moveTo(json.x,json.y,20,function(){
