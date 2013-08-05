@@ -30,20 +30,14 @@ pagePrivate.SongGame=(function(){
 				}else{
 					ctx.drawImage(c.canvas,c.x,c.y);
 				}
-				ctx.arc(250,250,10,2*Math.PI,false);
 				ctx.closePath();
 				ctx.fill();
 			};
 			RAF(dod);
 		};
 		var time=0;
-			var d=$("<div/>");
 		var dod=function(){
 			setAni();
-			var timestamp = (new Date()).valueOf(); 
-			var cha=timestamp-time;
-			window.cha=cha;
-			time=timestamp;
 		};
 		dod();
 	}
@@ -188,6 +182,7 @@ pagePrivate.SongGame=(function(){
 		this.drawfun={};
 		this.state=stage;
 		this.frameFunList={};
+		this.stage=stage;
 		var animate=stage.Animation;
 			animate.addFunToFrame(this.name+"run",function(){_oneFrame.call(that);});
 		this.init();
@@ -253,6 +248,11 @@ pagePrivate.SongGame=(function(){
 		var al=Math.atan(k);
 		var v=x1>x?1:-1;
 		var angle=al*(360/2/Math.PI)+270*v;
+			if(angle==-360){
+				angle=-180
+			}else if(angle==-180){
+				angle=-360;
+			}
 		this.rotateTo(angle);
 
 	};
@@ -301,8 +301,8 @@ pagePrivate.SongGame=(function(){
 			});
 	};
 	spirit.prototype.setLocal=function(x,y){
-		this.localX=x||this.localX||0;
-		this.localY=y||this.localY||0;
+		this.localX=x||this.localX;
+		this.localY=y||this.localY;
 		this.offsetX=this.localX-this.width/2;
 		this.offsetY=this.localY-this.height/2;
 	};
