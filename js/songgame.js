@@ -4,8 +4,8 @@ pagePrivate.SongGame=(function(){
 	/*
 	 *Animate
 	 * */
-	var RAF=window.mozRequestAnimationFrame||window.requestAnimationFrame||window.webkitRequestAnimationFrame;
 	var FrameTime=(function(){
+	var RAF=window.mozRequestAnimationFrame||window.requestAnimationFrame||window.webkitRequestAnimationFrame;
 	function animation(ctx){
 		this.canvasObjList={};
 		this.funAry={};
@@ -168,7 +168,7 @@ pagePrivate.SongGame=(function(){
 			}
 		};
 		if(this.drawfun[this.state]){
-			return this.drawfun[this.state].call(this);
+			this.drawfun[this.state].call(this);
 		};
 	};
 	function _distroyMyself(){

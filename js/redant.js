@@ -20,11 +20,27 @@ var game=window.game||(function(){
 		var _sprite=function(width,height){
 			this.width=width;
 			this.height=height;
+			this.ImageData={};
+			this.childSprite={};
 			_createTempCanvas.call(this);
 		};	
 		_sprite.prototype.test=function(){
 		
 		}
+		_sprite.prototype.setImageData=function(name,json){
+				var tempAry=[];
+				var tempJson=json[i];
+				for(var j=0,i=tempJson.length;j<l;j++){
+						var CanvasData=tempJson[j];
+					var canvas=document.createElement("canvas");
+						canvas.width=oneCanvaData.width;
+						canvas.height=oneCanvaData.height;
+					var ctx=canvas.getContext("2d");
+						ctx.drawImage(json.img,CanvasData.x,CanvasData.y,CanvasData.width,CanvasData.height);
+						tempAry.push(canvas);
+				}
+				this.ImageData[name]=tempAry;
+		};
 		_sprite.prototype.updateFrame=function(){
 
 		}
@@ -38,6 +54,7 @@ var game=window.game||(function(){
 	var Animation=(function(){
 		var _RAF=window.mozRequestAnimationFrame||window.requestAnimationFrame||window.webkitRequestAnimationFrame;
 		var _canvas,_ctx;
+		var _childList;
 		//
 		var _startAnimateList={};
 		function _startAnimate(time){
@@ -63,7 +80,9 @@ var game=window.game||(function(){
 
 		};
 		function _updateSprite(){
-			
+			for(var i in _childList){
+
+			}
 		};
 		function _oneFrame(){
 			_tick();
@@ -81,6 +100,9 @@ var game=window.game||(function(){
 				_ctx=canvas.getContext("2d");
 				_oneFrame();
 			},	
+			setChildList:function(childList){
+				_childList=childList;
+			},
 			pushStartAnimate:function(key,fun){
 				_startAnimateList[key]=fun;
 			},
@@ -135,18 +157,17 @@ var game=window.game||(function(){
 					tempJson.obj=img;
 				};
 		};
-		//
-		var spriteList={};
+		//child object
+		var child={};
 
 
 		//load modle
-
-
 		var _fun_createSound=function(){
 		};
 		return {
 			funLib:_funlib,
 			start:function(){
+				Animation.setChildList=child;
 				Animation.start(canvas);		
 			},
 			togglePaused:function(){
@@ -203,3 +224,21 @@ game.addFile([
 		,"url":"abc"
 	}
 ]).load();
+
+var sp=new Sprite();
+	sp.addInit("jump",{
+		"data":[
+				{"x":100,"y":200,"width":100,"height":100}
+				,{"x":100,"y":200,"width":100,"height":100}
+				,{"x":100,"y":200,"width":100,"height":100}
+			]
+		,"img":game.getImage("songsong")
+	});
+	sp.addInit("run",{
+		"data":[
+				{"x":100,"y":200,"width":100,"height":100}
+				,{"x":100,"y":200,"width":100,"height":100}
+				,{"x":100,"y":200,"width":100,"height":100}
+			]
+		,"img":game.getImage("songsong")
+	});
