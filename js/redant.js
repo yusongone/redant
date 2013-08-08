@@ -53,16 +53,15 @@ var game=window.game||(function(){
 		}
 		_sprite.prototype.oneFrameFun=function(animateData){
 				var now=animateData.now;
+				var d=animateData.pauseUsedTime;
 				for(var i in this.FrameFun){
 					var fun=this.FrameFun[i];
-
 					var useTime=(now-fun.startTime)||0;
-					if(game.pause){fun.startTime=now;continue;}
 					if(fun.fpsTime<(useTime+fun.surplusTime)){
-						animateData.useTime=useTime;
+						animateData.useTime=useTime-d;
 						fun.call(this,animateData);
 						fun.startTime=now;
-						fun.surplusTime=useTime-fun.fpsTime+fun.surplusTime;
+						fun.surplusTime=useTime-fun.fpsTime+fun.surplusTime-d;
 					}
 				}
 				for(var j in this.childSprite){
@@ -142,6 +141,7 @@ var game=window.game||(function(){
 			//_tick();
 			_AnimateData.oldTime=_AnimateData.now;
 			_AnimateData.now=time;
+			_AnimateData.pauseUsedTime=game.getPauseUsedTime();
 			_RAF(_oneFrame);
 			if(game.pause){return false;}
 			_clearScreen(_AnimateData);
@@ -154,6 +154,8 @@ var game=window.game||(function(){
 		return {
 			start:function(){
 				_oneFrame();
+				//game.togglePaused();
+				this.start=function(){console.log("game ware running")};
 			},	
 			getCanvas:function(){
 				return _canvas;
@@ -239,16 +241,30 @@ var game=window.game||(function(){
 		//load modle
 		var _fun_createSound=function(){
 		};
+		var _pauseUsedTime=0;
+		var _pauseTime=(new Date()).getTime();
 		return {
 			pause:1,
 			funLib:_funLib,
+			getPauseUsedTime:function(){
+				var temp=_pauseUsedTime;
+				_pauseUsedTime=0;
+				return temp;
+			},
 			start:function(){
 				this.pause=0;
 				Animation.start();		
 			},
 			togglePaused:function(){
-						 
-						 },
+				if(this.pause){
+					this.pause=0;
+					var now=(new Date()).getTime();
+						_pauseUsedTime=(now-_pauseTime);
+				}else{
+					_pauseTime=(new Date()).getTime();
+					this.pause=1;
+				}
+			},
 			getSprite:function(sprite){
 				return spriteList[name];
 			},	
@@ -326,11 +342,14 @@ function init(){
 		});
 		var i=0;
 		s.setCenter(100,100);
+		s.setFrame("runf",function(data){
+				console.log("ddef");
+		},1000);
 		s.setFrame("run",function(data){
 			var angle_s=6;
 			var time=data.useTime||0;	
 				s.angle+=angle_s*(time/1000);
-		});
+		},100);
 		var tt=0;
 		s.setFrame("test",function(data){
 			var time=data.useTime||1;
@@ -339,13 +358,20 @@ function init(){
 				this.spriteCtx.drawImage(this.canvasList["jump"][i],0,0);
 		},100);
 	$("body").click(function(){
-	game.start();
-	
+		game.start();
 	});	
+	var z=0;
 	window.onblur=function(){
-		game.pause=1;
+		//game.togglePaused();
 	}
 	window.onfocus=function(){
-		game.pause=false;
+	//	game.togglePaused();
+		z++;
+
 	}
+	document.addEventListener("keyup",function(evt){
+		if(evt.keyCode==13){
+			game.togglePaused();
+		};
+	},false);
 }
