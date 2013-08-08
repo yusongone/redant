@@ -188,9 +188,7 @@ var game=window.game||(function(){
 			sub.prototype=new temp();
 		};
 		var _randomJson={};
-		return {
-			extend:_extend
-			,getRandom:function(b,bool){
+		function _getRandom(b,bool){
 				var bb=b||10;
 					var bs=Math.pow(10,bb);
 				var sj=parseInt(bs*Math.random(1));
@@ -204,7 +202,11 @@ var game=window.game||(function(){
 					_randomJson[sj]=sj;
 					return sj;
 				}
-			}
+			};
+
+		return {
+			extend:_extend
+			,getRandom:_getRandom
 		};
 	})();
 
@@ -305,25 +307,6 @@ game.addFile([
 	}
 ]).load();
 
-/*
-var sp=new Sprite();
-	sp.addInit("jump",{
-		"data":[
-				{"x":100,"y":200,"width":100,"height":100}
-				,{"x":100,"y":200,"width":100,"height":100}
-				,{"x":100,"y":200,"width":100,"height":100}
-			]
-		,"img":game.getImage("songsong")
-	});
-	sp.addInit("run",{
-		"data":[
-				{"x":100,"y":200,"width":100,"height":100}
-				,{"x":100,"y":200,"width":100,"height":100}
-				,{"x":100,"y":200,"width":100,"height":100}
-			]
-		,"img":game.getImage("songsong")
-	});
-	*/
 function init(){
 	game.appendTo("box");
 	var sprite=game.getSpriteEntity();
