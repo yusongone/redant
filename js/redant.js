@@ -21,9 +21,12 @@ var game=window.game||(function(){
 			this.name=_game.funLib.getRandom();
 			this.width=width||20;
 			this.height=height||20;
-			this.ImageData={};
+			this.centerX=0;
+			this.centerY=0;
+			this.canvasList={};
 			this.childSprite={};
 			this.FrameFun={};
+			this.angle=0;
 			_createTempCanvas.call(this);
 			game.addSprite(this);
 			this.setFrame("drawNyCanvas",this.drawMyCanvas,10);
@@ -31,22 +34,40 @@ var game=window.game||(function(){
 		_sprite.prototype.test=function(){
 		
 		}
+		_sprite.prototype.setCenter=function(x,y){
+				this.centerX=x||this.centerX;
+				this.centerY=y||this.centerY;
+				this.offsetX=this.centerX-this.width/2;
+				this.offsetY=this.centerY-this.height/2;
+		}
 		_sprite.prototype.drawMyCanvas=function(animateData){
 			var ctx=animateData.ctx;
-				ctx.drawImage(this.spriteCanvas,0,0,this.width,this.height);
+			var cX=this.centerX,cY=this.centerY,offX=this.offsetX,offY=this.offsetY;
+				ctx.save();
+				ctx.translate(cY,cX);
+				ctx.rotate(Math.PI*2/360*this.angle);
+				ctx.translate(-cX,-cY);
+				ctx.drawImage(this.spriteCanvas,offX,offY,this.width,this.height);
+				ctx.strokeRect(offX,offY,this.width,this.height);
+				ctx.restore();
 		}
 		_sprite.prototype.oneFrameFun=function(animateData){
-				var time=animateData.time;
+				var now=animateData.now;
 				for(var i in this.FrameFun){
-					var temp=this.FrameFun[i];
-					if(temp.time<time-temp.index){
-						temp.index=time;
-						temp.call(this,animateData);
+					var fun=this.FrameFun[i];
+
+					var useTime=(now-fun.startTime)||0;
+					if(game.pause){fun.startTime=now;continue;}
+					if(fun.fpsTime<(useTime+fun.surplusTime)){
+						animateData.useTime=useTime;
+						fun.call(this,animateData);
+						fun.startTime=now;
+						fun.surplusTime=useTime-fun.fpsTime+fun.surplusTime;
 					}
 				}
 				for(var j in this.childSprite){
-					var temp=this.childSprite[j];
-						temp.oneFrameFun();
+					var temp_sprite=this.childSprite[j];
+						temp_Sprite.oneFrameFun();
 				}
 		};
 		_sprite.prototype.setImageData=function(name,json){
@@ -58,14 +79,15 @@ var game=window.game||(function(){
 						canvas.width=CanvasData.width;
 						canvas.height=CanvasData.height;
 					var ctx=canvas.getContext("2d");
-						ctx.drawImage(json.img,CanvasData.x,CanvasData.y,CanvasData.width,CanvasData.height);
+						ctx.drawImage(json.img,CanvasData.x,CanvasData.y,CanvasData.width,CanvasData.height,0,0,this.width,this.height);
 						tempAry.push(canvas);
 				}
-				this.ImageData[name]=tempAry;
+				this.canvasList[name]=tempAry;
 		};
 		_sprite.prototype.setFrame=function(name,fun,time){
-				fun.time=time;
-				fun.index=0;
+				fun.startTime=0;
+				fun.fpsTime=time||0;
+				fun.surplusTime=0;
 				this.FrameFun[name]=fun;
 		};
 		_sprite.prototype.removeFrame=function(name){
@@ -109,23 +131,25 @@ var game=window.game||(function(){
 		function _paintOverSprite() {
 
 		};
-		function _updateSprite(time){
+		function _updateSprite(_AnimateData){
 			for(var i in _childList){
-				_childList[i].oneFrameFun(time);
+				_childList[i].oneFrameFun(_AnimateData);
 			}
 		};
 		var _AnimateData={};
 			_AnimateData.ctx=_ctx;
 		function _oneFrame(time){
 			//_tick();
-			_AnimateData.time=time;
+			_AnimateData.oldTime=_AnimateData.now;
+			_AnimateData.now=time;
+			_RAF(_oneFrame);
+			if(game.pause){return false;}
 			_clearScreen(_AnimateData);
 			_startAnimate(_AnimateData);
 			_paintUnderSprite(_AnimateData);	
 			_updateSprite(_AnimateData);	
 			_paintOverSprite(_AnimateData);
 			_endAnimate(_AnimateData);
-			_RAF(_oneFrame);
 		};
 		return {
 			start:function(){
@@ -214,8 +238,10 @@ var game=window.game||(function(){
 		var _fun_createSound=function(){
 		};
 		return {
+			pause:1,
 			funLib:_funLib,
 			start:function(){
+				this.pause=0;
 				Animation.start();		
 			},
 			togglePaused:function(){
@@ -302,21 +328,41 @@ function init(){
 	game.appendTo("box");
 	var sprite=game.getSpriteEntity();
 	console.log(game.getImage("monkey"));
-	var s=new sprite(100,100);	
+	var s=new sprite(45,80);	
+	var w=47;
 		s.setImageData("jump",{
 			"data":[
-			{x:0,y:0,width:100,height:20}
+			{x:30,y:10,width:45,height:80}
+			,{x:30+w*1,y:10,width:45,height:80}
+			,{x:30+w*2,y:10,width:45,height:80}
+			,{x:30+w*3,y:10,width:45,height:80}
+			,{x:30+w*4,y:10,width:45,height:80}
+			,{x:30+w*5,y:10,width:45,height:80}
 					],
 			"img":game.getImage("monkey")
 		});
-	var i=0.5;
+		var i=0;
+		s.setCenter(100,100);
+		s.setFrame("run",function(data){
+			var angle_s=6;
+			var time=data.useTime||0;	
+				s.angle+=angle_s*(time/1000);
+		});
+		var tt=0;
 		s.setFrame("test",function(data){
-			this.spriteCtx.clearRect(0,0,this.width,this.height);
-			//this.spriteCtx.fillRect(i,i++,10,10);
-			this.spriteCtx.drawImage(this.ImageData["jump"][0],0,0);
-		},1000);
+			var time=data.useTime||1;
+				i<4?i++:i=0;
+				this.spriteCtx.clearRect(0,0,this.width,this.height);
+				this.spriteCtx.drawImage(this.canvasList["jump"][i],0,0);
+		},100);
 	$("body").click(function(){
 	game.start();
 	
 	});	
+	window.onblur=function(){
+		game.pause=1;
+	}
+	window.onfocus=function(){
+		game.pause=false;
+	}
 }
