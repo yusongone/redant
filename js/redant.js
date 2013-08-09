@@ -26,10 +26,11 @@ var game=window.game||(function(){
 			this.canvasList={};
 			this.childSprite={};
 			this.FrameFun={};
+			this.clickFun=[];
 			this.angle=0;
 			_createTempCanvas.call(this);
 			game.addSprite(this);
-			this.setFrame("drawNyCanvas",this.drawMyCanvas,10);
+			this.setFrame("drawNyCanvas",this.drawMyCanvas);
 		};	
 		_sprite.prototype.test=function(){
 		
@@ -41,6 +42,17 @@ var game=window.game||(function(){
 				this.offsetX=this.centerX-this.width/2;
 				this.offsetY=this.centerY-this.height/2;
 		}
+		_sprite.prototype.isInLocal=function(x,y){
+			var myX=this.centerX,myY=this.centerY;
+			var w=this.width/2,h=this.height/2;
+			if((Math.abs(myX-x)<w)&&(Math.abs(myY-y)<h)){
+				return true;
+			};
+			return false;
+		};
+		_sprite.prototype.click=function(fun){
+				this.clickFun.push(fun);
+		};
 		//draw this self temp canvas to Animation's canvas
 		_sprite.prototype.drawMyCanvas=function(animateData){
 			var ctx=animateData.ctx;
@@ -59,7 +71,8 @@ var game=window.game||(function(){
 				var d=animateData.pauseUsedTime;
 				for(var i in this.FrameFun){
 					var fun=this.FrameFun[i];
-					var useTime=(now-fun.startTime)||0;
+					fun.startTime=fun.startTime||now;
+					var useTime=now-fun.startTime;
 					if(fun.fpsTime<(useTime+fun.surplusTime)){
 						animateData.useTime=useTime-d;
 						fun.call(this,animateData);
@@ -89,7 +102,7 @@ var game=window.game||(function(){
 		};
 		//add a Frame to this Frame fun list;
 		_sprite.prototype.setFrame=function(name,fun,time){
-				fun.startTime=0;
+				fun.startTime=0;//(new Date()).getTime();
 				fun.fpsTime=time||0;
 				fun.surplusTime=0;
 				this.FrameFun[name]=fun;
@@ -148,6 +161,7 @@ var game=window.game||(function(){
 			_AnimateData.oldTime=_AnimateData.now;
 			_AnimateData.now=time;
 			_AnimateData.pauseUsedTime=game.getPauseUsedTime();
+		//	console.log(_AnimateData.now-_AnimateData.oldTime);
 			_RAF(_oneFrame);
 			if(game.pause){return false;}
 			_clearScreen(_AnimateData);
@@ -160,7 +174,8 @@ var game=window.game||(function(){
 		return {
 			//start animation
 			start:function(){
-				_oneFrame();
+				console.log("start");
+			_RAF(_oneFrame);
 				//game.togglePaused();
 				this.start=function(){console.log("game ware running")};
 			},	
@@ -243,36 +258,37 @@ var game=window.game||(function(){
 	var _game=(function(){
 		//load modle
 		var fileJson={};
-		var _canvas=Animate.getCanvas();
+		var _canvas=Animation.getCanvas();
 		//bindEvent on canvas
-		function _bindEvent(){
 			_canvas.addEventListener("click",function(evt){
-			
-			});	
-		};
-
-		function getChildSprite(Sprite){
-			var tempSprite.childList;
-			for(var i in Sprite.){
-			
-			}
-		
-		};
-
-		// find all sprite in this Area;
-		function _getSpiritAryByLocal(SpiritAry,x,y,bool){
-			var ary=[];
-			for(var i=SpiritAry.length-1,l=0;i>-1;i--){
-				if(SpiritAry[i].isInLocal(x,y)){
-					ary.push(SpiritAry[i]);
-					if(bool){
-						return ary;
+				_getChildSprite(reverseSpriteList,function(sprite){
+						console.log(evt.offsetX,evt.offsetY);
+				if(sprite.isInLocal(evt.offsetX,evt.offsetY)){
+					var cf=sprite.clickFun;
+					var bool=true;
+					for(var i=0,l=cf.length;i<l;i++){
+							if(false==cf[i]()){
+								bool=false;	
+							};
 					};
+					return bool;
 				};
+				});
+			},false);	
+
+		function _getChildSprite(tempList,fun){
+			for(var i in tempList){
+				var tempSprite=tempList[i];
+					if(fun){
+						var bool=fun(tempSprite);
+						if(!bool){
+							break;
+						}
+					}
+				_getChildSprite(tempList[i].childList);
 			};
-			return ary;
-				
 		};
+
 		//create img by load date save in cache
 		function _createImage(tempJson){
 			var img=document.createElement("img");
@@ -291,6 +307,7 @@ var game=window.game||(function(){
 		};
 		//child object
 		var spriteList={};
+		var reverseSpriteList={};
 
 		//bind this spriteList to Animation's childList;
 		Animation.setChildList(spriteList);
@@ -333,6 +350,14 @@ var game=window.game||(function(){
 			//add "direct" sprite to game;
 			addSprite:function(sprite){
 				spriteList[sprite.name]=sprite;
+				reverseSpriteList={};
+				var tempAry=[];
+				for(var i in spriteList){
+					tempAry.push(spriteList[i]);
+				};
+				for(var i=tempAry.length-1,l=-1;i>l;i--){
+					reverseSpriteList[tempAry[i].name]=tempAry[i];
+				};
 			},
 			//return Sprite Entity function;
 			getSpriteEntity:function(){
@@ -392,6 +417,7 @@ function init(){
 	game.appendTo("box");
 	var sprite=game.getSpriteEntity();
 	console.log(game.getImage("monkey"));
+	var ss=new sprite(10,80);	
 	var s=new sprite(45,80);	
 	var w=47;
 		s.setImageData("jump",{
@@ -416,6 +442,15 @@ function init(){
 				s.angle+=angle_s*(time/1000);
 		},100);
 		var tt=0;
+		s.click(function(evt){
+				console.log("dd");
+			return false;
+		});
+		s.click(function(evt){
+				console.log("cc");
+			return false;
+		});
+		ss.click(function(){console.log("ssssw");});
 		s.setFrame("test",function(data){
 			var time=data.useTime||1;
 				i<4?i++:i=0;
@@ -423,7 +458,8 @@ function init(){
 				this.spriteCtx.drawImage(this.canvasList["jump"][i],0,0);
 		},100);
 	$("body").click(function(){
-		game.start();
+	//	game.start();
+				game.start();	
 	});	
 	var z=0;
 	window.onblur=function(){
