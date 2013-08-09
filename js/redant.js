@@ -34,12 +34,14 @@ var game=window.game||(function(){
 		_sprite.prototype.test=function(){
 		
 		}
+		//set center coord
 		_sprite.prototype.setCenter=function(x,y){
 				this.centerX=x||this.centerX;
 				this.centerY=y||this.centerY;
 				this.offsetX=this.centerX-this.width/2;
 				this.offsetY=this.centerY-this.height/2;
 		}
+		//draw this self temp canvas to Animation's canvas
 		_sprite.prototype.drawMyCanvas=function(animateData){
 			var ctx=animateData.ctx;
 			var cX=this.centerX,cY=this.centerY,offX=this.offsetX,offY=this.offsetY;
@@ -51,6 +53,7 @@ var game=window.game||(function(){
 				ctx.strokeRect(offX,offY,this.width,this.height);
 				ctx.restore();
 		}
+		//do this Frame function when Animation's Frame;
 		_sprite.prototype.oneFrameFun=function(animateData){
 				var now=animateData.now;
 				var d=animateData.pauseUsedTime;
@@ -69,6 +72,7 @@ var game=window.game||(function(){
 						temp_Sprite.oneFrameFun();
 				}
 		};
+		// set this all Image Data,e.g. coord, size ,img object;
 		_sprite.prototype.setImageData=function(name,json){
 				var tempAry=[];
 				var tempJson=json;
@@ -83,12 +87,14 @@ var game=window.game||(function(){
 				}
 				this.canvasList[name]=tempAry;
 		};
+		//add a Frame to this Frame fun list;
 		_sprite.prototype.setFrame=function(name,fun,time){
 				fun.startTime=0;
 				fun.fpsTime=time||0;
 				fun.surplusTime=0;
 				this.FrameFun[name]=fun;
 		};
+		//remove Frame of this Frame fun List;
 		_sprite.prototype.removeFrame=function(name){
 				delete this.FrameFun[name];
 		};
@@ -152,11 +158,13 @@ var game=window.game||(function(){
 			_endAnimate(_AnimateData);
 		};
 		return {
+			//start animation
 			start:function(){
 				_oneFrame();
 				//game.togglePaused();
 				this.start=function(){console.log("game ware running")};
 			},	
+			//return _canvas;
 			getCanvas:function(){
 				return _canvas;
 			},
@@ -172,6 +180,7 @@ var game=window.game||(function(){
 			removeEndAnimate:function(){
 				delete _endAnimateList[key];
 			},
+			//bind this childList to game childList;
 			setChildList:function(obj){
 				_childList=obj;
 			}
@@ -183,12 +192,15 @@ var game=window.game||(function(){
 	 *
 	 * */
 	var _funLib=(function(){
+		//extend
 		function _extend(sup,sub){
 			function temp(){};	
 			temp.prototype=sup.prototype;
 			temp.constructor=sub;
 			sub.prototype=new temp();
 		};
+
+		//get a random num;
 		var _randomJson={};
 		function _getRandom(b,bool){
 				var bb=b||10;
@@ -204,11 +216,24 @@ var game=window.game||(function(){
 					_randomJson[sj]=sj;
 					return sj;
 				}
-			};
+		};
+		//get angle of A to B
+		function _getAngle(x1,y1,x2,y2){
+			var k=(y1-y2)/(x1-x2);
+			var al=Math.atan(k);
+			var v=x1>x2?1:-1;
+			var angle=al*(360/2/Math.PI)+270*v;
+				if(angle==-360){
+					angle=-180
+				}else if(angle==-180){
+					angle=-360;
+				}
+		};
 
 		return {
 			extend:_extend
 			,getRandom:_getRandom
+			,getAngle:_getAngle
 		};
 	})();
 
@@ -218,7 +243,37 @@ var game=window.game||(function(){
 	var _game=(function(){
 		//load modle
 		var fileJson={};
+		var _canvas=Animate.getCanvas();
+		//bindEvent on canvas
+		function _bindEvent(){
+			_canvas.addEventListener("click",function(evt){
+			
+			});	
+		};
 
+		function getChildSprite(Sprite){
+			var tempSprite.childList;
+			for(var i in Sprite.){
+			
+			}
+		
+		};
+
+		// find all sprite in this Area;
+		function _getSpiritAryByLocal(SpiritAry,x,y,bool){
+			var ary=[];
+			for(var i=SpiritAry.length-1,l=0;i>-1;i--){
+				if(SpiritAry[i].isInLocal(x,y)){
+					ary.push(SpiritAry[i]);
+					if(bool){
+						return ary;
+					};
+				};
+			};
+			return ary;
+				
+		};
+		//create img by load date save in cache
 		function _createImage(tempJson){
 			var img=document.createElement("img");
 				img.src=tempJson.url;
@@ -226,6 +281,7 @@ var game=window.game||(function(){
 					tempJson.obj=img;
 				};
 		};
+		//create sound by load date save in cache
 		var _fun_createSound=function(tempJson){
 			var img=document.createElement("img");
 				img.src=tempJson.url;
@@ -235,26 +291,27 @@ var game=window.game||(function(){
 		};
 		//child object
 		var spriteList={};
+
+		//bind this spriteList to Animation's childList;
 		Animation.setChildList(spriteList);
 
-
-		//load modle
-		var _fun_createSound=function(){
-		};
 		var _pauseUsedTime=0;
 		var _pauseTime=(new Date()).getTime();
 		return {
 			pause:1,
 			funLib:_funLib,
+			// get times of pause uesd;
 			getPauseUsedTime:function(){
 				var temp=_pauseUsedTime;
 				_pauseUsedTime=0;
 				return temp;
 			},
+			//start Animation;
 			start:function(){
 				this.pause=0;
 				Animation.start();		
 			},
+			//toggle pause ; turn on or turn off;
 			togglePaused:function(){
 				if(this.pause){
 					this.pause=0;
@@ -265,18 +322,23 @@ var game=window.game||(function(){
 					this.pause=1;
 				}
 			},
+			//return "direct" sprite of game;
 			getSprite:function(sprite){
 				return spriteList[name];
 			},	
+			//remove "direct" sprite of game;
 			removeSprite:function(name){
 				delete spriteList[name];
 			},
+			//add "direct" sprite to game;
 			addSprite:function(sprite){
 				spriteList[sprite.name]=sprite;
 			},
+			//return Sprite Entity function;
 			getSpriteEntity:function(){
 				return Sprite;
 			},
+			//add some files in loader
 			addFile:function(Ary){
 				for(var i=0,l=Ary.length;i<l;i++){
 					var tempObj=Ary[i];
@@ -286,6 +348,7 @@ var game=window.game||(function(){
 				};
 				return this;
 			},
+			//go to load
 			load:function(){
 				var imgJson=fileJson.img,
 					soundJson=fileJson.sound;
@@ -295,17 +358,19 @@ var game=window.game||(function(){
 					for(var i in soundJson){
 						_fun_createSound(soundJson[i]);
 					}
-				 },
+			},
+			//return img object of game cache;
 			getImage:function(name){
 				return fileJson["img"][name].obj;
 			},
+			//return sound object of game cache;
 			getSound:function(){
 			},
+			//append this canvas to a tage;str is tage id ;
 			appendTo:function(str){
 				var box=document.getElementById(str);
-					box.appendChild(Animation.getCanvas());
-					   
-					   }
+					box.appendChild(_canvas);
+			}
 		}
 	})();
 	return _game;
