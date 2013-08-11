@@ -11,9 +11,24 @@ var game=window.game||(function(){
 				tempCanvas.width=this.width;
 				tempCanvas.height=this.height;
 			this.spriteCanvas=tempCanvas;
-			this.spriteCtx=tempCanvas.getContext("2d");
+			this.ctx=tempCanvas.getContext("2d");
 		};
-
+		_checkHit=function(Sprite,fun){
+			var x=Sprite.centerX;
+			var y=Sprite.centerY;
+			var tempHeight=(Sprite.height+this.height)/2;
+			var tempWidth=(Sprite.width+this.width)/2;
+			var subWidth=Math.abs(x-this.centerX)-tempWidth;
+			var subHeight=Math.abs(y-this.centerY)-tempHeight;
+			var now_Sprite_Space=game.getSpaceBetweenDoubleCoord(this.centerX,this.centerY,x,y);
+			var Prev_Sprite_Space=game.getSpaceBetweenDoubleCoord(x,y,this.prevX,this.prevY);
+			var now_Prev_Space=game.getSpaceBetweenDoubleCoord(this.centerX,this.centerY,this.prevX,this.prevY);
+			var d=now_Prev_Space-(now_Sprite_Space+Prev_Sprite_Space);
+			if(subWidth<0&&subHeight<0||d==0){
+				var d=fun(Sprite);
+				if(d===false){return ;};
+			};
+		};
 		/*
 		 *sprite entity;
 		 * */
@@ -27,21 +42,38 @@ var game=window.game||(function(){
 			this.childSprite={};
 			this.FrameFun={};
 			this.clickFun=[];
+			this.prevX=0;
+			this.prevY=0;
+			this.speed=0;
 			this.angle=0;
 			_createTempCanvas.call(this);
 			game.addSprite(this);
 			this.setFrame("drawNyCanvas",this.drawMyCanvas);
 		};	
 		_sprite.prototype.test=function(){
-		
-		}
+		};
+		_sprite.prototype.speak=function(str){
+			console.log(this.name+":"+str);
+		};
+		_sprite.prototype.checkHit=function(spriteList,fun){
+			for(var i in spriteList){
+				_checkHit.call(this,spriteList[i],fun);
+			}
+		};
 		//set center coord
 		_sprite.prototype.setCenter=function(x,y){
 				this.centerX=x||this.centerX;
 				this.centerY=y||this.centerY;
 				this.offsetX=this.centerX-this.width/2;
 				this.offsetY=this.centerY-this.height/2;
-		}
+		};
+		_sprite.prototype.nextLocal=function(usedTime){
+		//	var s=d	
+			var al=Math.PI*2*(this.angle/360);
+			var x=Math.sin(al)*this.speed*usedTime/1000;
+			var y=-Math.cos(al)*this.speed*usedTime/1000;
+			return {"x":this.centerX+x,"y":this.centerY+y}
+		};
 		_sprite.prototype.isInLocal=function(x,y){
 			var myX=this.centerX,myY=this.centerY;
 			var w=this.width/2,h=this.height/2;
@@ -58,7 +90,7 @@ var game=window.game||(function(){
 			var ctx=animateData.ctx;
 			var cX=this.centerX,cY=this.centerY,offX=this.offsetX,offY=this.offsetY;
 				ctx.save();
-				ctx.translate(cY,cX);
+				ctx.translate(cX,cY);
 				ctx.rotate(Math.PI*2/360*this.angle);
 				ctx.translate(-cX,-cY);
 				ctx.drawImage(this.spriteCanvas,offX,offY,this.width,this.height);
@@ -67,6 +99,9 @@ var game=window.game||(function(){
 		}
 		//do this Frame function when Animation's Frame;
 		_sprite.prototype.oneFrameFun=function(animateData){
+				this.prevX=this.centerX;
+				this.prevY=this.centerY;
+
 				var now=animateData.now;
 				var d=animateData.pauseUsedTime;
 				for(var i in this.FrameFun){
@@ -120,8 +155,8 @@ var game=window.game||(function(){
 	 * */
 	var Animation=(function(){
 		var _canvas=document.createElement("canvas");
-			_canvas.width=100;
-			_canvas.width=200;
+			_canvas.width=500;
+			_canvas.height=500;
 			_ctx=_canvas.getContext("2d");
 		var _RAF=window.mozRequestAnimationFrame||window.requestAnimationFrame||window.webkitRequestAnimationFrame;
 		var _childList;
@@ -260,20 +295,25 @@ var game=window.game||(function(){
 		var fileJson={};
 		var _canvas=Animation.getCanvas();
 		//bindEvent on canvas
+			_clickFun=[];
 			_canvas.addEventListener("click",function(evt){
+				var bool=true;
 				_getChildSprite(reverseSpriteList,function(sprite){
-						console.log(evt.offsetX,evt.offsetY);
-				if(sprite.isInLocal(evt.offsetX,evt.offsetY)){
-					var cf=sprite.clickFun;
-					var bool=true;
-					for(var i=0,l=cf.length;i<l;i++){
-							if(false==cf[i]()){
-								bool=false;	
-							};
+					if(sprite.isInLocal(evt.offsetX,evt.offsetY)){
+						var cf=sprite.clickFun;
+						for(var i=0,l=cf.length;i<l;i++){
+								if(false==cf[i](evt.offsetX,evt.offsetY)){
+									bool=false;	
+								};
+						};
+						return bool;
 					};
-					return bool;
-				};
 				});
+				if(bool){
+					for(var i =_clickFun.length-1,l=-1;i>l;i--){
+						_clickFun[i]({"x":evt.offsetX,"y":evt.offsetY});
+					};
+				}
 			},false);	
 
 		function _getChildSprite(tempList,fun){
@@ -305,6 +345,12 @@ var game=window.game||(function(){
 					tempJson.obj=img;
 				};
 		};
+		var _getSpaceBetweenDoubleCoord=function(x1,y1,x2,y2){
+			var powX=Math.pow(x2-x1,2);
+			var powY=Math.pow(y2-y1,2);
+			var space=Math.sqrt(powX+powY);
+			return space;
+		}
 		//child object
 		var spriteList={};
 		var reverseSpriteList={};
@@ -323,6 +369,10 @@ var game=window.game||(function(){
 				_pauseUsedTime=0;
 				return temp;
 			},
+			config:function(json){
+				
+			},
+			getSpaceBetweenDoubleCoord:_getSpaceBetweenDoubleCoord,
 			//start Animation;
 			start:function(){
 				this.pause=0;
@@ -338,6 +388,9 @@ var game=window.game||(function(){
 					_pauseTime=(new Date()).getTime();
 					this.pause=1;
 				}
+			},
+			click:function(fun){
+				_clickFun.push(fun);
 			},
 			//return "direct" sprite of game;
 			getSprite:function(sprite){
@@ -392,8 +445,7 @@ var game=window.game||(function(){
 			getSound:function(){
 			},
 			//append this canvas to a tage;str is tage id ;
-			appendTo:function(str){
-				var box=document.getElementById(str);
+			appendTo:function(box){
 					box.appendChild(_canvas);
 			}
 		}
@@ -401,25 +453,9 @@ var game=window.game||(function(){
 	return _game;
 })();
 
-game.addFile([
-	{
-		"type":"img"
-		,"name":"monkey"
-		,"url":"/image/people.jpg"
-	},
-	{
-		"type":"sound"
-		,"url":"/sound/sound.mp3"
-	}
-]).load();
 
-function init(){
-	game.appendTo("box");
-	var sprite=game.getSpriteEntity();
-	console.log(game.getImage("monkey"));
-	var ss=new sprite(10,80);	
-	var s=new sprite(45,80);	
-	var w=47;
+function inita(){
+	/*
 		s.setImageData("jump",{
 			"data":[
 			{x:30,y:10,width:45,height:80}
@@ -433,34 +469,25 @@ function init(){
 		});
 		var i=0;
 		s.setCenter(100,100);
-		s.setFrame("runf",function(data){
-				console.log("ddef");
-		},1000);
-		s.setFrame("run",function(data){
-			var angle_s=6;
-			var time=data.useTime||0;	
-				s.angle+=angle_s*(time/1000);
-		},100);
-		var tt=0;
 		s.click(function(evt){
 				console.log("dd");
-			return false;
+				return false;
 		});
 		s.click(function(evt){
 				console.log("cc");
-			return false;
+				return false;
 		});
 		ss.click(function(){console.log("ssssw");});
 		s.setFrame("test",function(data){
 			var time=data.useTime||1;
 				i<4?i++:i=0;
-				this.spriteCtx.clearRect(0,0,this.width,this.height);
-				this.spriteCtx.drawImage(this.canvasList["jump"][i],0,0);
+				this.ctx.clearRect(0,0,this.width,this.height);
+				this.ctx.drawImage(this.canvasList["jump"][i],0,0);
 		},100);
-	$("body").click(function(){
-	//	game.start();
-				game.start();	
-	});	
+		game.click(function(evt){
+			console.log(evt.x,evt.y);
+		});
+		*/
 	var z=0;
 	window.onblur=function(){
 		//game.togglePaused();

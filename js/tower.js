@@ -1,16 +1,71 @@
-var SG=pagePrivate.SongGame;
+game.addFile([
+	{
+		"type":"img"
+		,"name":"monkey"
+		,"url":"/image/people.jpg"
+	},
+	{
+		"type":"sound"
+		,"url":"/sound/sound.mp3"
+	}
+]).load();
+
 	function init(){
-		var imgData={
-			"people":"/image/people.jpg"
-			,"lb":"/image/lb.jpg"
+		game.appendTo(document.getElementById("box"));
+	var sprite=game.getSpriteEntity();
+		//some event
+		var t;
+		$("body").click(function(){
+			game.start();	
+			//setTimeout(function(){alert("");},10);
+		});	
+		/*
+	var Tank=new sprite(100,10);	
+		Tank.setCenter(100,100);
+		Tank.setFrame("zd",function(){
+			this.angle+=6;
+			if(this.angle==360){
+				var at=(new Date()).getTime();
+				alert(at-t);
+			}
+		},1000);
+		return false;
+		*/
+	//var s=new sprite(45,80);	
+	var Tank=new sprite(10,10);	
+		Tank.setCenter(10,100);
+		Tank.angle=90;
+		Tank.speed=0.3;
+		var ttt=0;
+		Tank.setFrame("moveto",function(){
+			var d=this.nextLocal();
+			this.setCenter(d.x,d.y);	
+		},16);
+	var Tank2=new sprite(30,30);	
+		Tank2.setCenter(500,100);
+		var width=30;
+		Tank2.ctx.fillRect(0,0,width,30);
+		Tank2.sub=function(){
+			Tank2.ctx.clearRect(0,0,30,30);
+			Tank2.ctx.fillRect(0,0,width--,30);
 		}
-	SG.config({
-		"box":document.getElementById("box")
-	});
-	SG.loadImg(imgData,function(){
-		gameMain.begin();
-	});
+	var bul=new sprite(2,2);
+		bul.angle=Tank.angle;
+		bul.speed=1000;
+		bul.setCenter(Tank.centerX,Tank.centerY);
+		bul.setFrame("moveTo",function(data){
+			var d=this.nextLocal(data.useTime);
+				this.setCenter(d.x,d.y);	
+				var that=this;
+			function temp(hittedSprite){
+				hittedSprite.sub();
+				that.setCenter(Tank.centerX,Tank.centerY);
+				//bul.removeFrame("moveTo");
+			}
+				this.checkHit({"tank":Tank2},temp);
+		});
 	};
+/*
 //子弹
 var gameMain=(function(){
 		var Tank=(function(){
@@ -228,4 +283,4 @@ var gameMain=(function(){
 				});
 			}
 
-			
+*/			
