@@ -53,10 +53,6 @@ game.File.addFile([
 			if(left==4){
 			}
 		},500);
-		game.Animation.setFrame(Tank.name+"moveto",function(){
-			var d=Tank.nextLocal();
-		//	this.setCenter(d.x,d.y);	
-		},16);
 	var Tank2=new sprite(30,30);	
 		Tank2.setCenter(500,100);
 		var width=30;
@@ -65,6 +61,9 @@ game.File.addFile([
 			Tank2.ctx.clearRect(0,0,30,30);
 			Tank2.ctx.fillRect(0,0,width--,30);
 		}
+		Tank.click(function(){
+			alert();
+		});
 		l1.append(Tank2);
 	var bul=new sprite(2,2);
 		bul.angle=Tank.angle;
@@ -88,6 +87,7 @@ game.File.addFile([
 		test.ctx.fillStyle="yellow";
 		test.ctx.fillRect(0,0,50,50);
 		l2.append(test);
+		test.click(function(){alert()});
 
 	};
 /*

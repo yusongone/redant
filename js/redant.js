@@ -66,7 +66,9 @@ var game=window.game||(function(){
 			var Prev_Sprite_Space=game.funLib.getSpaceBetweenDoubleCoord(x,y,this.prevX,this.prevY);
 			var now_Prev_Space=game.funLib.getSpaceBetweenDoubleCoord(this.offsetX,this.offsetY,this.prevX,this.prevY);
 			var d=now_Prev_Space-(now_Sprite_Space+Prev_Sprite_Space);
-			if(subWidth<0&&subHeight<0||d==0){
+				d=(Math.abs(d.toFixed(6))<1);
+			console.log(d);
+			if(subWidth<0&&subHeight<0||d){
 				var d=fun(Sprite);
 				if(d===false){return ;};
 			};
@@ -128,7 +130,7 @@ var game=window.game||(function(){
 			return {"x":this.centerX+x,"y":this.centerY+y}
 		};
 		_sprite.prototype.isInLocal=function(x,y){
-			var myX=this.centerX,myY=this.centerY;
+			var myX=this.offsetX,myY=this.offsetY;
 			var w=this.width/2,h=this.height/2;
 			if((Math.abs(myX-x)<w)&&(Math.abs(myY-y)<h)){
 				return true;
@@ -277,11 +279,12 @@ var game=window.game||(function(){
 		return {
 			//start animation
 			start:function(){
+				game.Progress.pause=0;
 				_layerList=game.LayerFactory.getLayerList();
 				console.log("start");
 				_RAF(_oneFrame);
 				//game.togglePaused();
-				this.start=function(){console.log("game ware running")};
+				this.start=function(){console.error("game ware running")};
 			},	
 			parseLayerList:_parseLayerList,
 			//return _canvas;
@@ -387,10 +390,23 @@ var game=window.game||(function(){
 	
 
 	var _eventManage=(function(){
-		function _click(){
-			Animation.parseLayerList(function(spriteList){
+		function _getChildSprite(tempList,fun){
+			var length=tempList.length;
+			for(var i=length-1;i>-1;i--){
+				var tempSprite=tempList[i];
+				if(fun){
+					var bool=fun(tempSprite);
+						if(!bool){
+							break;
+						}
+				}
+				_getChildSprite(tempList[i].childSprite);
+			}
+		};
+		function _click(evt){
+			Animation.parseLayerList(function(layer){
 				var bool=true;		
-				_getChildSprite(spriteList,function(sprite){
+				_getChildSprite(layer.spriteList,function(sprite){
 					if(sprite.isInLocal(evt.offsetX,evt.offsetY)){
 						var cf=sprite.clickFun;
 						for(var i=0,l=cf.length;i<l;i++){
@@ -411,15 +427,15 @@ var game=window.game||(function(){
 			});
 		};
 		function _bindClick(){
-		var _canvas=Animation.getCanvas();
-			_canvas.addEventListener("click",function(){
-				_click();	
-			},false);
+			var _canvas=Animation.getCanvas();
+				_canvas.addEventListener("click",function(evt){
+					_click(evt);	
+				},false);
 		}
 		return {
 			init:function(){
 				 _bindClick();
-				 }
+			}
 		}
 	})();
 
@@ -432,19 +448,6 @@ var game=window.game||(function(){
 		var _canvas=Animation.getCanvas();
 		//bindEvent on canvas
 			_clickFun=[];
-			function _getChildSprite(tempList,fun){
-			var length=tempList.length;
-			for(var i=length-1;i>-1;i--){
-				var tempSprite=tempList[i];
-				if(fun){
-					var bool=fun(tempSprite);
-						if(!bool){
-							break;
-						}
-				}
-				_getChildSprite(tempList[i].childList);
-			}
-		};
 
 		//child object
 		var spriteList=[];
@@ -481,8 +484,9 @@ var game=window.game||(function(){
 			pause:1,
 			//start Animation;
 			start:function(){
-				this.pause=0;
 				Animation.start();		
+				_eventManage.init();
+				this.start=function(){};
 			},
 			//toggle pause ; turn on or turn off;
 			togglePaused:function(){
@@ -575,39 +579,6 @@ var game=window.game||(function(){
 
 
 function inita(){
-	/*
-		s.setImageData("jump",{
-			"data":[
-			{x:30,y:10,width:45,height:80}
-			,{x:30+w*1,y:10,width:45,height:80}
-			,{x:30+w*2,y:10,width:45,height:80}
-			,{x:30+w*3,y:10,width:45,height:80}
-			,{x:30+w*4,y:10,width:45,height:80}
-			,{x:30+w*5,y:10,width:45,height:80}
-					],
-			"img":game.getImage("monkey")
-		});
-		var i=0;
-		s.setCenter(100,100);
-		s.click(function(evt){
-				console.log("dd");
-				return false;
-		});
-		s.click(function(evt){
-				console.log("cc");
-				return false;
-		});
-		ss.click(function(){console.log("ssssw");});
-		s.setFrame("test",function(data){
-			var time=data.useTime||1;
-				i<4?i++:i=0;
-				this.ctx.clearRect(0,0,this.width,this.height);
-				this.ctx.drawImage(this.canvasList["jump"][i],0,0);
-		},100);
-		game.click(function(evt){
-			console.log(evt.x,evt.y);
-		});
-		*/
 	var z=0;
 	window.onblur=function(){
 		//game.togglePaused();
