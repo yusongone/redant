@@ -21,7 +21,7 @@ var game=window.game||(function(){
 			var i=game.funLib.selectArrayByObj(_layerList,this);	
 			var temp=_layerList[i];
 			_layerList.splice(i,1);
-		//	_layerList.push(temp);
+			_layerList.push(temp);
 		};
 		layer.prototype.toBottom=function(){
 			var i=game.funLib.selectArrayByObj(_layerList,this);	
@@ -103,8 +103,6 @@ var game=window.game||(function(){
 			this.speed=0;
 			this.angle=0;
 			_createTempCanvas.call(this);
-		//	game.addSprite(this);
-			this.setFrame("drawMyCanvas",this.drawMyCanvas);
 		};	
 		_sprite.prototype.test=function(){
 		};
@@ -157,25 +155,7 @@ var game=window.game||(function(){
 		_sprite.prototype.oneFrameFun=function(animateData){
 				this.prevX=this.centerX;
 				this.prevY=this.centerY;
-
-				var now=animateData.now;
-				var d=animateData.pauseUsedTime;
-				for(var i in this.FrameFun){
-					var fun=this.FrameFun[i];
-					fun.startTime=fun.startTime||now;
-					var useTime=now-fun.startTime;
-					if(fun.fpsTime<(useTime+fun.surplusTime)){
-						animateData.useTime=useTime-d;
-						fun.call(this,animateData);
-						fun.startTime=now;
-						fun.surplusTime=useTime-fun.fpsTime+fun.surplusTime-d;
-					}
-				}
-				var length=this.childSprite.length;
-				for(var j =0;j<length;j++){
-					var temp_sprite=this.childSprite[j];
-						temp_Sprite.oneFrameFun();
-				}
+				this.drawMyCanvas(animateData);
 		};
 		// set this all Image Data,e.g. coord, size ,img object;
 		_sprite.prototype.setImageData=function(name,json){
@@ -218,15 +198,19 @@ var game=window.game||(function(){
 		var _RAF=window.mozRequestAnimationFrame||window.requestAnimationFrame||window.webkitRequestAnimationFrame;
 		var _layerList=null;
 		var _overLayerFunList={};
-		//
+		var _frameFunList={};
+		var _endAnimateList={};
 		var _startAnimateList={};
+		var _AnimateData={};
+			_AnimateData.ctx=_ctx;
+
+		//
 		function _startAnimate(time){
 			for(var i in _startAnimateList){
 				_startAnimateList[i](time);
 			}
 		};
 		//
-		var _endAnimateList={};
 		function _endAnimate(){
 			for(var i in _endAnimateList){
 				_endAnimateList[i]();
@@ -236,9 +220,6 @@ var game=window.game||(function(){
 		function _clearScreen(){
 			_ctx.clearRect(0,0,_canvas.width,_canvas.height);
 		};
-		function _paintUnderSprite(){
-			
-		};
 		function _paintOverSprite(_AnimateData) {
 			for(var i in _overLayerFunList){
 				_overLayerFunList[i](_AnimateData);
@@ -246,7 +227,6 @@ var game=window.game||(function(){
 		};
 		function _parseLayerList(fun){
 			var l=_layerList.length;
-			console.log("df"+l);
 			for(var i=0;i<l;i++){
 				var bool=fun(_layerList[i]);
 				if(bool==false){
@@ -263,8 +243,22 @@ var game=window.game||(function(){
 				};
 			});
 		};
-		var _AnimateData={};
-			_AnimateData.ctx=_ctx;
+
+		function _FrameFun(animateData){
+				var now=animateData.now;
+				var d=animateData.pauseUsedTime;
+				for(var i in _frameFunList){
+					var fun=_frameFunList[i];
+					fun.startTime=fun.startTime||now;
+					var useTime=now-fun.startTime;
+					if(fun.fpsTime<(useTime+fun.surplusTime)){
+						animateData.useTime=useTime-d;
+						fun.call(this,animateData);
+						fun.startTime=now;
+						fun.surplusTime=useTime-fun.fpsTime+fun.surplusTime-d;
+					}
+				}
+		};
 		function _oneFrame(time){
 			//_tick();
 			_AnimateData.oldTime=_AnimateData.now;
@@ -274,8 +268,8 @@ var game=window.game||(function(){
 			_RAF(_oneFrame);
 			if(game.Progress.pause){return false;}
 			_clearScreen(_AnimateData);
+			_FrameFun(_AnimateData);
 			_startAnimate(_AnimateData);
-			_paintUnderSprite(_AnimateData);	
 			_updateSprite(_AnimateData);	
 			_paintOverSprite(_AnimateData);
 			_endAnimate(_AnimateData);
@@ -312,6 +306,12 @@ var game=window.game||(function(){
 			},
 			setOverFunction:function(name,fun){
 				_overLayerFunList[name]=fun;
+			},
+			setFrame:function(name,fun,time){
+				fun.startTime=0;//(new Date()).getTime();
+				fun.fpsTime=time||0;
+				fun.surplusTime=0;
+				_frameFunList[name]=fun;
 			}
 
 		}	
