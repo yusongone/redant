@@ -1,4 +1,4 @@
-game.addFile([
+game.File.addFile([
 	{
 		"type":"img"
 		,"name":"monkey"
@@ -11,13 +11,16 @@ game.addFile([
 ]).load();
 
 	function init(){
+		game.config({
+			"canvasWidth":"500"
+			,"canvasHeight":"500"
+		});
 		game.appendTo(document.getElementById("box"));
-	var sprite=game.getSpriteEntity();
+	var sprite=game.SpriteFactory.getSpriteEntity();
 		//some event
 		var t;
 		$("body").click(function(){
-			game.start();	
-			//setTimeout(function(){alert("");},10);
+			game.Progress.start();	
 		});	
 		/*
 	var Tank=new sprite(100,10);	
@@ -32,14 +35,24 @@ game.addFile([
 		return false;
 		*/
 	//var s=new sprite(45,80);	
+	var l1=game.LayerFactory.createLayer("button");
 	var Tank=new sprite(10,10);	
-		Tank.setCenter(10,100);
 		Tank.angle=90;
 		Tank.speed=0.3;
+		l1.setCoord(40,left++);
+		l1.append(Tank);
+		Tank.setCenter(10,100);
 		var ttt=0;
+		var left=0;
+		Tank.setFrame("dd",function(){
+			l1.setCoord(10,left++);
+			if(left==10){
+				l1.toTop();
+			}
+		},500);
 		Tank.setFrame("moveto",function(){
 			var d=this.nextLocal();
-			this.setCenter(d.x,d.y);	
+		//	this.setCenter(d.x,d.y);	
 		},16);
 	var Tank2=new sprite(30,30);	
 		Tank2.setCenter(500,100);
@@ -49,9 +62,11 @@ game.addFile([
 			Tank2.ctx.clearRect(0,0,30,30);
 			Tank2.ctx.fillRect(0,0,width--,30);
 		}
+		l1.append(Tank2);
 	var bul=new sprite(2,2);
 		bul.angle=Tank.angle;
 		bul.speed=1000;
+		l1.append(bul);
 		bul.setCenter(Tank.centerX,Tank.centerY);
 		bul.setFrame("moveTo",function(data){
 			var d=this.nextLocal(data.useTime);
@@ -64,6 +79,13 @@ game.addFile([
 			}
 				this.checkHit({"tank":Tank2},temp);
 		});
+	var l2=game.LayerFactory.createLayer("button");
+	var test=new sprite(50,50);
+		test.setCenter(100,100);
+		test.ctx.fillStyle="yellow";
+		test.ctx.fillRect(0,0,50,50);
+		l2.append(test);
+
 	};
 /*
 //子弹

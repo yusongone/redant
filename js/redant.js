@@ -1,4 +1,46 @@
 var game=window.game||(function(){
+	var _layerList=[];
+	var Layer=(function(){
+		function layer(){
+			this.spriteList=[];
+			this.coordX=0;
+			this.coordY=0;
+		};
+		layer.prototype.setCoord=function(x,y){
+			this.coordX=x||this.coordX;
+			this.coordY=y||this.coordY;
+		};
+		layer.prototype.append=function(obj){
+			game.funLib.selectArrayByObj(this.spriteList,obj,function(i){
+				this.spriteList.splice(i,1);	
+			});
+			obj.layer=this;
+			this.spriteList.push(obj);
+		};
+		layer.prototype.toTop=function(){
+			var i=game.funLib.selectArrayByObj(_layerList,this);	
+			var temp=_layerList[i];
+			_layerList.splice(i,1);
+			_layerList.push(temp);
+		};
+		layer.prototype.toBottom=function(){
+			var i=game.funLib.selectArrayByObj(_layerList,this);	
+			var temp=_layerList[i];
+			_layerList.splice(i,1);
+			_layerList.unshift(temp);
+		};
+		return {
+				getLayerList:function(){
+					return _layerList;
+				},
+				createLayer:function(){
+					var ly=new layer(name);
+						_layerList.push(ly);
+					return ly;
+				}
+			}
+	})();
+
 	// game engine return sprite
 	var Sprite=(function(){
 		/*
@@ -13,22 +55,35 @@ var game=window.game||(function(){
 			this.spriteCanvas=tempCanvas;
 			this.ctx=tempCanvas.getContext("2d");
 		};
-		_checkHit=function(Sprite,fun){
-			var x=Sprite.centerX;
-			var y=Sprite.centerY;
+		function _checkHit(Sprite,fun){
+			var x=Sprite.offsetX;
+			var y=Sprite.offsetY;
 			var tempHeight=(Sprite.height+this.height)/2;
 			var tempWidth=(Sprite.width+this.width)/2;
-			var subWidth=Math.abs(x-this.centerX)-tempWidth;
-			var subHeight=Math.abs(y-this.centerY)-tempHeight;
-			var now_Sprite_Space=game.getSpaceBetweenDoubleCoord(this.centerX,this.centerY,x,y);
-			var Prev_Sprite_Space=game.getSpaceBetweenDoubleCoord(x,y,this.prevX,this.prevY);
-			var now_Prev_Space=game.getSpaceBetweenDoubleCoord(this.centerX,this.centerY,this.prevX,this.prevY);
+			var subWidth=Math.abs(x-this.offsetX)-tempWidth;
+			var subHeight=Math.abs(y-this.offsetY)-tempHeight;
+			var now_Sprite_Space=game.funLib.getSpaceBetweenDoubleCoord(this.offsetX,this.offsetY,x,y);
+			var Prev_Sprite_Space=game.funLib.getSpaceBetweenDoubleCoord(x,y,this.prevX,this.prevY);
+			var now_Prev_Space=game.funLib.getSpaceBetweenDoubleCoord(this.offsetX,this.offsetY,this.prevX,this.prevY);
 			var d=now_Prev_Space-(now_Sprite_Space+Prev_Sprite_Space);
 			if(subWidth<0&&subHeight<0||d==0){
 				var d=fun(Sprite);
 				if(d===false){return ;};
 			};
 		};
+		function _getOffsetCoord(){
+			var layer=this.layer;
+				var layerCoordX=0,
+					layerCoordY=0;
+				if(layer){
+					layerCoordX=layer.coordX;
+					layerCoordY=layer.coordY;
+				}
+					this.offsetX=this.centerX+layerCoordX;
+					this.offsetY=this.centerY+layerCoordY;
+					this.drawX=this.offsetX-this.width/2;
+					this.drawY=this.offsetY-this.height/2;
+		}
 		/*
 		 *sprite entity;
 		 * */
@@ -39,16 +94,17 @@ var game=window.game||(function(){
 			this.centerX=0;
 			this.centerY=0;
 			this.canvasList={};
-			this.childSprite={};
+			this.childSprite=[];
 			this.FrameFun={};
 			this.clickFun=[];
+			this.layer=null;
 			this.prevX=0;
 			this.prevY=0;
 			this.speed=0;
 			this.angle=0;
 			_createTempCanvas.call(this);
-			game.addSprite(this);
-			this.setFrame("drawNyCanvas",this.drawMyCanvas);
+		//	game.addSprite(this);
+			this.setFrame("drawMyCanvas",this.drawMyCanvas);
 		};	
 		_sprite.prototype.test=function(){
 		};
@@ -64,8 +120,7 @@ var game=window.game||(function(){
 		_sprite.prototype.setCenter=function(x,y){
 				this.centerX=x||this.centerX;
 				this.centerY=y||this.centerY;
-				this.offsetX=this.centerX-this.width/2;
-				this.offsetY=this.centerY-this.height/2;
+				_getOffsetCoord.call(this);
 		};
 		_sprite.prototype.nextLocal=function(usedTime){
 		//	var s=d	
@@ -88,13 +143,14 @@ var game=window.game||(function(){
 		//draw this self temp canvas to Animation's canvas
 		_sprite.prototype.drawMyCanvas=function(animateData){
 			var ctx=animateData.ctx;
-			var cX=this.centerX,cY=this.centerY,offX=this.offsetX,offY=this.offsetY;
+				this.layer?_getOffsetCoord.call(this):"";
+			var oX=this.offsetX,oY=this.offsetY,drawX=this.drawX,drawY=this.drawY;
 				ctx.save();
-				ctx.translate(cX,cY);
+				ctx.translate(oX,oY);
 				ctx.rotate(Math.PI*2/360*this.angle);
-				ctx.translate(-cX,-cY);
-				ctx.drawImage(this.spriteCanvas,offX,offY,this.width,this.height);
-				ctx.strokeRect(offX,offY,this.width,this.height);
+				ctx.translate(-oX,-oY);
+				ctx.drawImage(this.spriteCanvas,drawX,drawY,this.width,this.height);
+				ctx.strokeRect(drawX,drawY,this.width,this.height);
 				ctx.restore();
 		}
 		//do this Frame function when Animation's Frame;
@@ -115,7 +171,8 @@ var game=window.game||(function(){
 						fun.surplusTime=useTime-fun.fpsTime+fun.surplusTime-d;
 					}
 				}
-				for(var j in this.childSprite){
+				var length=this.childSprite.length;
+				for(var j =0;j<length;j++){
 					var temp_sprite=this.childSprite[j];
 						temp_Sprite.oneFrameFun();
 				}
@@ -159,7 +216,8 @@ var game=window.game||(function(){
 			_canvas.height=500;
 			_ctx=_canvas.getContext("2d");
 		var _RAF=window.mozRequestAnimationFrame||window.requestAnimationFrame||window.webkitRequestAnimationFrame;
-		var _childList;
+		var _layerList=null;
+		var _overLayerFunList={};
 		//
 		var _startAnimateList={};
 		function _startAnimate(time){
@@ -181,13 +239,26 @@ var game=window.game||(function(){
 		function _paintUnderSprite(){
 			
 		};
-		function _paintOverSprite() {
-
+		function _paintOverSprite(_AnimateData) {
+			for(var i in _overLayerFunList){
+				_overLayerFunList[i](_AnimateData);
+			}
+		};
+		function _parseLayerList(fun){
+			var l=_layerList.length;
+			for(var i=0;i<l;i++){
+				fun(_layerList[i]);
+			}
 		};
 		function _updateSprite(_AnimateData){
-			for(var i in _childList){
-				_childList[i].oneFrameFun(_AnimateData);
-			}
+			_parseLayerList(function(_layer){
+				var _childList=_layer.spriteList;
+				var length=_childList.length;
+				for(var i=0;i<length;i++){
+					console.log("ff");
+					_childList[i].oneFrameFun(_AnimateData);
+				};
+			});
 		};
 		var _AnimateData={};
 			_AnimateData.ctx=_ctx;
@@ -198,7 +269,7 @@ var game=window.game||(function(){
 			_AnimateData.pauseUsedTime=game.getPauseUsedTime();
 		//	console.log(_AnimateData.now-_AnimateData.oldTime);
 			_RAF(_oneFrame);
-			if(game.pause){return false;}
+			if(game.Progress.pause){return false;}
 			_clearScreen(_AnimateData);
 			_startAnimate(_AnimateData);
 			_paintUnderSprite(_AnimateData);	
@@ -209,8 +280,9 @@ var game=window.game||(function(){
 		return {
 			//start animation
 			start:function(){
+				_layerList=game.LayerFactory.getLayerList();
 				console.log("start");
-			_RAF(_oneFrame);
+				_RAF(_oneFrame);
 				//game.togglePaused();
 				this.start=function(){console.log("game ware running")};
 			},	
@@ -233,6 +305,9 @@ var game=window.game||(function(){
 			//bind this childList to game childList;
 			setChildList:function(obj){
 				_childList=obj;
+			},
+			setOverFunction:function(name,fun){
+				_overLayerFunList[name]=fun;
 			}
 
 		}	
@@ -278,12 +353,31 @@ var game=window.game||(function(){
 				}else if(angle==-180){
 					angle=-360;
 				}
+			return angle;
+		};
+		function _getSpaceBetweenDoubleCoord(x1,y1,x2,y2){
+			var powX=Math.pow(x2-x1,2);
+			var powY=Math.pow(y2-y1,2);
+			var space=Math.sqrt(powX+powY);
+			return space;
+		}
+		function _findObj(parentObj,subObj,fun){
+			var l=parentObj.length;
+			for(var i=0;i<l;i++){
+				if(parentObj[i]==subObj){
+					fun?fun(i):"";
+					return i;
+				};
+			}
+			return -1;
 		};
 
 		return {
 			extend:_extend
 			,getRandom:_getRandom
 			,getAngle:_getAngle
+			,selectArrayByObj:_findObj
+			,getSpaceBetweenDoubleCoord:_getSpaceBetweenDoubleCoord
 		};
 	})();
 
@@ -298,7 +392,7 @@ var game=window.game||(function(){
 			_clickFun=[];
 			_canvas.addEventListener("click",function(evt){
 				var bool=true;
-				_getChildSprite(reverseSpriteList,function(sprite){
+				_getChildSprite(spriteList,function(sprite){
 					if(sprite.isInLocal(evt.offsetX,evt.offsetY)){
 						var cf=sprite.clickFun;
 						for(var i=0,l=cf.length;i<l;i++){
@@ -309,70 +403,60 @@ var game=window.game||(function(){
 						return bool;
 					};
 				});
+				//
 				if(bool){
 					for(var i =_clickFun.length-1,l=-1;i>l;i--){
 						_clickFun[i]({"x":evt.offsetX,"y":evt.offsetY});
 					};
 				}
 			},false);	
-
 		function _getChildSprite(tempList,fun){
-			for(var i in tempList){
+			var length=tempList.length;
+			for(var i=length-1;i>-1;i--){
 				var tempSprite=tempList[i];
-					if(fun){
-						var bool=fun(tempSprite);
+				if(fun){
+					var bool=fun(tempSprite);
 						if(!bool){
 							break;
 						}
-					}
+				}
 				_getChildSprite(tempList[i].childList);
-			};
+			}
 		};
 
-		//create img by load date save in cache
-		function _createImage(tempJson){
-			var img=document.createElement("img");
-				img.src=tempJson.url;
-				img.onload=function(){
-					tempJson.obj=img;
-				};
-		};
-		//create sound by load date save in cache
-		var _fun_createSound=function(tempJson){
-			var img=document.createElement("img");
-				img.src=tempJson.url;
-				img.onload=function(){
-					tempJson.obj=img;
-				};
-		};
-		var _getSpaceBetweenDoubleCoord=function(x1,y1,x2,y2){
-			var powX=Math.pow(x2-x1,2);
-			var powY=Math.pow(y2-y1,2);
-			var space=Math.sqrt(powX+powY);
-			return space;
-		}
 		//child object
-		var spriteList={};
-		var reverseSpriteList={};
-
+		var spriteList=[];
 		//bind this spriteList to Animation's childList;
-		Animation.setChildList(spriteList);
 
 		var _pauseUsedTime=0;
 		var _pauseTime=(new Date()).getTime();
-		return {
+		
+
+		var _spriteObj={
+			//return "direct" sprite of game;
+			getSprite:function(sprite){
+				return spriteList[name];
+			},	
+			//remove "direct" sprite of game;
+			removeSprite:function(name){
+				var length=spriteList.length;
+				for(var i=0;i<length;i++){
+					if(spriteList[i].name==name){
+						spriteList.splice(i,1);
+					}
+				}
+			},
+			//add "direct" sprite to game;
+			addSprite:function(sprite){
+				spriteList.push(sprite);
+			},
+			//return Sprite Entity function;
+			getSpriteEntity:function(){
+				return Sprite;
+			}
+		};
+		var _progress={
 			pause:1,
-			funLib:_funLib,
-			// get times of pause uesd;
-			getPauseUsedTime:function(){
-				var temp=_pauseUsedTime;
-				_pauseUsedTime=0;
-				return temp;
-			},
-			config:function(json){
-				
-			},
-			getSpaceBetweenDoubleCoord:_getSpaceBetweenDoubleCoord,
 			//start Animation;
 			start:function(){
 				this.pause=0;
@@ -388,34 +472,10 @@ var game=window.game||(function(){
 					_pauseTime=(new Date()).getTime();
 					this.pause=1;
 				}
-			},
-			click:function(fun){
-				_clickFun.push(fun);
-			},
-			//return "direct" sprite of game;
-			getSprite:function(sprite){
-				return spriteList[name];
-			},	
-			//remove "direct" sprite of game;
-			removeSprite:function(name){
-				delete spriteList[name];
-			},
-			//add "direct" sprite to game;
-			addSprite:function(sprite){
-				spriteList[sprite.name]=sprite;
-				reverseSpriteList={};
-				var tempAry=[];
-				for(var i in spriteList){
-					tempAry.push(spriteList[i]);
-				};
-				for(var i=tempAry.length-1,l=-1;i>l;i--){
-					reverseSpriteList[tempAry[i].name]=tempAry[i];
-				};
-			},
-			//return Sprite Entity function;
-			getSpriteEntity:function(){
-				return Sprite;
-			},
+			}
+		};
+
+		var _fileObj={
 			//add some files in loader
 			addFile:function(Ary){
 				for(var i=0,l=Ary.length;i<l;i++){
@@ -426,15 +486,31 @@ var game=window.game||(function(){
 				};
 				return this;
 			},
+			//create img by load date save in cache
+			_createImage:function(tempJson){
+				var img=document.createElement("img");
+					img.src=tempJson.url;
+					img.onload=function(){
+						tempJson.obj=img;
+					};
+			},
+			//create sound by load date save in cache
+			_createSound:function(tempJson){
+				var img=document.createElement("img");
+					img.src=tempJson.url;
+					img.onload=function(){
+						tempJson.obj=img;
+					};
+			},
 			//go to load
 			load:function(){
 				var imgJson=fileJson.img,
 					soundJson=fileJson.sound;
 					for(var i in imgJson){
-						_createImage(imgJson[i]);	
+						this._createImage(imgJson[i]);	
 					}
 					for(var i in soundJson){
-						_fun_createSound(soundJson[i]);
+						this._createSound(soundJson[i]);
 					}
 			},
 			//return img object of game cache;
@@ -443,6 +519,28 @@ var game=window.game||(function(){
 			},
 			//return sound object of game cache;
 			getSound:function(){
+			}
+		}
+		return {
+			SpriteFactory:_spriteObj,
+			LayerFactory:Layer,
+			File:_fileObj,
+			Progress:_progress,
+			Animation:Animation,
+			funLib:_funLib,
+			// get times of pause uesd;
+			getPauseUsedTime:function(){
+				var temp=_pauseUsedTime;
+				_pauseUsedTime=0;
+				return temp;
+			},
+			config:function(json){
+				_canvas.width=json.canvasWidth;	
+				_canvas.height=json.canvasHeight;	
+				this.config=function(){console.error("config");}
+			},
+			click:function(fun){
+				_clickFun.push(fun);
 			},
 			//append this canvas to a tage;str is tage id ;
 			appendTo:function(box){
@@ -499,7 +597,7 @@ function inita(){
 	}
 	document.addEventListener("keyup",function(evt){
 		if(evt.keyCode==13){
-			game.togglePaused();
+			game.Progress.togglePaused();
 		};
 	},false);
 }
