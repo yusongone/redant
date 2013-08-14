@@ -46,7 +46,7 @@ game.File.addFile([
 		var left=0;
 		Tank.setFrame("dd",function(){
 			l1.setCoord(10,left++);
-			if(left==10){
+			if(left==4){
 				l1.toTop();
 			}
 		},500);

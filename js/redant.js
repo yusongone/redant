@@ -21,7 +21,7 @@ var game=window.game||(function(){
 			var i=game.funLib.selectArrayByObj(_layerList,this);	
 			var temp=_layerList[i];
 			_layerList.splice(i,1);
-			_layerList.push(temp);
+		//	_layerList.push(temp);
 		};
 		layer.prototype.toBottom=function(){
 			var i=game.funLib.selectArrayByObj(_layerList,this);	
@@ -246,8 +246,12 @@ var game=window.game||(function(){
 		};
 		function _parseLayerList(fun){
 			var l=_layerList.length;
+			console.log("df"+l);
 			for(var i=0;i<l;i++){
-				fun(_layerList[i]);
+				var bool=fun(_layerList[i]);
+				if(bool==false){
+					return bool;
+				}
 			}
 		};
 		function _updateSprite(_AnimateData){
@@ -255,7 +259,6 @@ var game=window.game||(function(){
 				var _childList=_layer.spriteList;
 				var length=_childList.length;
 				for(var i=0;i<length;i++){
-					console.log("ff");
 					_childList[i].oneFrameFun(_AnimateData);
 				};
 			});
@@ -286,6 +289,7 @@ var game=window.game||(function(){
 				//game.togglePaused();
 				this.start=function(){console.log("game ware running")};
 			},	
+			parseLayerList:_parseLayerList,
 			//return _canvas;
 			getCanvas:function(){
 				return _canvas;
@@ -380,18 +384,12 @@ var game=window.game||(function(){
 			,getSpaceBetweenDoubleCoord:_getSpaceBetweenDoubleCoord
 		};
 	})();
+	
 
-	/*
-	 * main of game engine 
-	 */
-	var _game=(function(){
-		//load modle
-		var fileJson={};
-		var _canvas=Animation.getCanvas();
-		//bindEvent on canvas
-			_clickFun=[];
-			_canvas.addEventListener("click",function(evt){
-				var bool=true;
+	var _eventManage=(function(){
+		function _click(){
+			Animation.parseLayerList(function(spriteList){
+				var bool=true;		
 				_getChildSprite(spriteList,function(sprite){
 					if(sprite.isInLocal(evt.offsetX,evt.offsetY)){
 						var cf=sprite.clickFun;
@@ -409,8 +407,32 @@ var game=window.game||(function(){
 						_clickFun[i]({"x":evt.offsetX,"y":evt.offsetY});
 					};
 				}
-			},false);	
-		function _getChildSprite(tempList,fun){
+				return bool;
+			});
+		};
+		function _bindClick(){
+		var _canvas=Animation.getCanvas();
+			_canvas.addEventListener("click",function(){
+				_click();	
+			},false);
+		}
+		return {
+			init:function(){
+				 _bindClick();
+				 }
+		}
+	})();
+
+	/*
+	 * main of game engine 
+	 */
+	var _game=(function(){
+		//load modle
+		var fileJson={};
+		var _canvas=Animation.getCanvas();
+		//bindEvent on canvas
+			_clickFun=[];
+			function _getChildSprite(tempList,fun){
 			var length=tempList.length;
 			for(var i=length-1;i>-1;i--){
 				var tempSprite=tempList[i];
