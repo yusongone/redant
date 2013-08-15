@@ -22,24 +22,11 @@ game.File.addFile([
 		$("body").click(function(){
 			game.Progress.start();	
 		});	
-		/*
-	var Tank=new sprite(100,10);	
-		Tank.setCenter(100,100);
-		Tank.setFrame("zd",function(){
-			this.angle+=6;
-			if(this.angle==360){
-				var at=(new Date()).getTime();
-				alert(at-t);
-			}
-		},1000);
-		return false;
-		*/
-	//var s=new sprite(45,80);	
 	var l1=game.LayerFactory.createLayer("button");
 	var Tank=new sprite(40,40);	
 		Tank.angle=90;
 		Tank.speed=0.3;
-		l1.setCoord(40,left++);
+		l1.setCoord(10,0);
 		l1.append(Tank);
 		Tank.setCenter(10,100);
 		var ttt=0;
@@ -48,10 +35,10 @@ game.File.addFile([
 			l1.toTop();
 		},5000);
 		game.Animation.setFrame("dd",function(){
-		//	l1.setCoord(10,left++);
+			l1.setCoord(10,left++);
 			if(left==4){
 			}
-		},500);
+		},30);
 	var Tank2=new sprite(30,30);	
 		Tank2.setCenter(300,100);
 		var width=30;
@@ -60,6 +47,9 @@ game.File.addFile([
 			Tank2.ctx.clearRect(0,0,30,30);
 			Tank2.ctx.fillRect(0,0,width--,30);
 		}
+		Tank2.click(function(){
+			alert("tank2");
+		});
 		Tank.click(function(){
 			alert("tank");
 		});
@@ -75,7 +65,7 @@ game.File.addFile([
 		game.Animation.setFrame(bul.name+"moveTo",function(data){
 				var that=bul;
 			var d=that.nextLocal(data.useTime);
-			//	that.setCenter(d.x,d.y);	
+				that.setCenter(d.x,d.y);	
 			function temp(hittedSprite){
 				hittedSprite.sub();
 				that.setCenter(Tank.centerX,Tank.centerY);

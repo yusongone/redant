@@ -66,7 +66,7 @@ var game=window.game||(function(){
 			var Vy=(this.offsetY-y)*(this.prevY-y)<0;
 			if(subWidth<0&&subHeight<0||Vx||Vy){
 				var d=fun(Sprite);
-				if(d===false){return ;};
+				return d;
 			};
 		};
 		function _getOffsetCoord(){
@@ -109,7 +109,10 @@ var game=window.game||(function(){
 		};
 		_sprite.prototype.checkHit=function(spriteList,fun){
 			for(var i in spriteList){
-				_checkHit.call(this,spriteList[i],fun);
+				var bool=_checkHit.call(this,spriteList[i],fun);
+				if(bool===false){
+					break;
+				};
 			}
 		};
 		//set center coord
@@ -128,7 +131,6 @@ var game=window.game||(function(){
 		_sprite.prototype.isInLocal=function(x,y){
 			var myX=this.offsetX,myY=this.offsetY;
 			var w=this.width/2,h=this.height/2;
-			console.log(Math.abs(myX-x)<w,myX,x,w);
 			if((Math.abs(myX-x)<w)&&(Math.abs(myY-y)<h)){
 				return true;
 			};
@@ -383,7 +385,7 @@ var game=window.game||(function(){
 				var tempSprite=tempList[i];
 				if(fun){
 					var bool=fun(tempSprite);
-						if(false==bool){
+						if(false===bool){
 							break;
 						}
 				}
@@ -397,7 +399,7 @@ var game=window.game||(function(){
 					if(sprite.isInLocal(evt.offsetX,evt.offsetY)){
 						var cf=sprite.clickFun;
 						for(var i=0,l=cf.length;i<l;i++){
-								if(false==cf[i](evt.offsetX,evt.offsetY)){
+								if(false===cf[i](evt.offsetX,evt.offsetY)){
 									bool=false;	
 								};
 						};
