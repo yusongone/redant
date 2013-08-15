@@ -10,10 +10,14 @@ var game=window.game||(function(){
 			this.coordX=x||this.coordX;
 			this.coordY=y||this.coordY;
 		};
-		layer.prototype.append=function(obj){
+		layer.prototype.removeSprite=function(obj){
+			var that=this;
 			game.funLib.selectArrayByObj(this.spriteList,obj,function(i){
-				this.spriteList.splice(i,1);	
+				that.spriteList.splice(i,1);	
 			});
+
+		};
+		layer.prototype.append=function(obj){
 			obj.layer=this;
 			this.spriteList.push(obj);
 		};
@@ -55,6 +59,13 @@ var game=window.game||(function(){
 			this.spriteCanvas=tempCanvas;
 			this.ctx=tempCanvas.getContext("2d");
 		};
+		function _goCoord(x,y,fun){
+			var Vx=(this.offsetX-x)*(this.prevX-x)<0;
+			var Vy=(this.offsetY-y)*(this.prevY-y)<0;
+			if(Vx||Vy){
+				fun();
+			};
+		}
 		function _checkHit(Sprite,fun){
 			var x=Sprite.offsetX;
 			var y=Sprite.offsetY;
@@ -92,7 +103,6 @@ var game=window.game||(function(){
 			this.centerX=0;
 			this.centerY=0;
 			this.canvasList={};
-			this.childSprite=[];
 			this.FrameFun={};
 			this.clickFun=[];
 			this.layer=null;
@@ -103,12 +113,49 @@ var game=window.game||(function(){
 			_createTempCanvas.call(this);
 		};	
 		_sprite.prototype.test=function(){
+				alert("test");
 		};
 		_sprite.prototype.speak=function(str){
 			console.log(this.name+":"+str);
 		};
+		_sprite.prototype.distroy=function(x,y,fun){
+			var layer=this.layer;
+			layer.removeSprite(this);
+		};
+		_sprite.prototype.goCoord=function(x,y,fun){
+			_goCoord.call(this,x,y,fun);
+		};
+		_sprite.prototype.followTo=function(sprite,fun){
+			var that=this;
+			game.Animation.setFrame(that.name+"followTo",function(data){
+				var x=sprite.offsetX,y=sprite.offsetY;
+			that.angle=game.funLib.getAngle(that.offsetX,that.offsetY,x,y);
+				var d=that.nextLocal(data.useTime);
+				that.setCenter(d.x,d.y);
+				that.checkHit([sprite],function(){
+					that.setCenter(x,y);
+					game.Animation.removeFrame(that.name+"followTo");
+					fun.call(that);
+				});
+			});
+
+		};
+		_sprite.prototype.moveTo=function(x,y,fun){
+			var that=this;
+			that.angle=game.funLib.getAngle(that.offsetX,that.offsetY,x,y);
+			game.Animation.setFrame(that.name+"moveTo",function(data){
+				var d=that.nextLocal(data.useTime);
+				that.setCenter(d.x,d.y);
+				that.goCoord(x,y,function(){
+					that.setCenter(x,y);
+					game.Animation.removeFrame(that.name+"moveTo");
+					fun.call(that);
+				});
+			});
+		};
 		_sprite.prototype.checkHit=function(spriteList,fun){
-			for(var i in spriteList){
+			var l=spriteList.length;
+			for(var i=0;i<l;i++){
 				var bool=_checkHit.call(this,spriteList[i],fun);
 				if(bool===false){
 					break;
@@ -291,12 +338,11 @@ var game=window.game||(function(){
 			removeEndAnimate:function(){
 				delete _endAnimateList[key];
 			},
-			//bind this childList to game childList;
-			setChildList:function(obj){
-				_childList=obj;
-			},
 			setOverFunction:function(name,fun){
 				_overLayerFunList[name]=fun;
+			},
+			removeFrame:function(name){
+				delete _frameFunList[name];
 			},
 			setFrame:function(name,fun,time){
 				fun.startTime=0;//(new Date()).getTime();
@@ -389,7 +435,6 @@ var game=window.game||(function(){
 							break;
 						}
 				}
-				_getChildSprite(tempList[i].childSprite);
 			}
 		};
 		function _click(evt){
@@ -447,23 +492,6 @@ var game=window.game||(function(){
 		
 
 		var _spriteObj={
-			//return "direct" sprite of game;
-			getSprite:function(sprite){
-				return spriteList[name];
-			},	
-			//remove "direct" sprite of game;
-			removeSprite:function(name){
-				var length=spriteList.length;
-				for(var i=0;i<length;i++){
-					if(spriteList[i].name==name){
-						spriteList.splice(i,1);
-					}
-				}
-			},
-			//add "direct" sprite to game;
-			addSprite:function(sprite){
-				spriteList.push(sprite);
-			},
 			//return Sprite Entity function;
 			getSpriteEntity:function(){
 				return Sprite;
