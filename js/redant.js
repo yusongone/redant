@@ -128,6 +128,7 @@ var game=window.game||(function(){
 		_sprite.prototype.isInLocal=function(x,y){
 			var myX=this.offsetX,myY=this.offsetY;
 			var w=this.width/2,h=this.height/2;
+			console.log(Math.abs(myX-x)<w,myX,x,w);
 			if((Math.abs(myX-x)<w)&&(Math.abs(myY-y)<h)){
 				return true;
 			};
@@ -169,17 +170,6 @@ var game=window.game||(function(){
 						tempAry.push(canvas);
 				}
 				this.canvasList[name]=tempAry;
-		};
-		//add a Frame to this Frame fun list;
-		_sprite.prototype.setFrame=function(name,fun,time){
-				fun.startTime=0;//(new Date()).getTime();
-				fun.fpsTime=time||0;
-				fun.surplusTime=0;
-				this.FrameFun[name]=fun;
-		};
-		//remove Frame of this Frame fun List;
-		_sprite.prototype.removeFrame=function(name){
-				delete this.FrameFun[name];
 		};
 		return _sprite;
 	})();
@@ -388,11 +378,12 @@ var game=window.game||(function(){
 	var _eventManage=(function(){
 		function _getChildSprite(tempList,fun){
 			var length=tempList.length;
+			var bool=true;
 			for(var i=length-1;i>-1;i--){
 				var tempSprite=tempList[i];
 				if(fun){
 					var bool=fun(tempSprite);
-						if(!bool){
+						if(false==bool){
 							break;
 						}
 				}

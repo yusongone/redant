@@ -36,7 +36,7 @@ game.File.addFile([
 		*/
 	//var s=new sprite(45,80);	
 	var l1=game.LayerFactory.createLayer("button");
-	var Tank=new sprite(10,10);	
+	var Tank=new sprite(40,40);	
 		Tank.angle=90;
 		Tank.speed=0.3;
 		l1.setCoord(40,left++);
@@ -45,13 +45,11 @@ game.File.addFile([
 		var ttt=0;
 		var left=0;
 		game.Animation.setFrame("test",function(){
-			console.log("dddd");
-				l1.toTop();
+			l1.toTop();
 		},5000);
 		game.Animation.setFrame("dd",function(){
-			l1.setCoord(10,left++);
+		//	l1.setCoord(10,left++);
 			if(left==4){
-				alert("");
 			}
 		},500);
 	var Tank2=new sprite(30,30);	
@@ -63,18 +61,21 @@ game.File.addFile([
 			Tank2.ctx.fillRect(0,0,width--,30);
 		}
 		Tank.click(function(){
-			alert();
+			alert("tank");
 		});
 		l1.append(Tank2);
-	var bul=new sprite(2,2);
+	var bul=new sprite(20,20);
 		bul.angle=Tank.angle;
 		bul.speed=1000;
 		l1.append(bul);
+		bul.click(function(){
+			alert("bul");
+		});
 		bul.setCenter(Tank.centerX,Tank.centerY);
 		game.Animation.setFrame(bul.name+"moveTo",function(data){
 				var that=bul;
 			var d=that.nextLocal(data.useTime);
-				that.setCenter(d.x,d.y);	
+			//	that.setCenter(d.x,d.y);	
 			function temp(hittedSprite){
 				hittedSprite.sub();
 				that.setCenter(Tank.centerX,Tank.centerY);
