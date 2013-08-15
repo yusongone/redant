@@ -63,8 +63,10 @@ var game=window.game||(function(){
 			var Vx=(this.offsetX-x)*(this.prevX-x)<0;
 			var Vy=(this.offsetY-y)*(this.prevY-y)<0;
 			if(Vx||Vy){
-				fun();
+				fun?fun():"";
+				return true;
 			};
+			return false;
 		}
 		function _checkHit(Sprite,fun){
 			var x=Sprite.offsetX;
@@ -73,9 +75,7 @@ var game=window.game||(function(){
 			var tempWidth=(Sprite.width+this.width)/2;
 			var subWidth=Math.abs(x-this.offsetX)-tempWidth;
 			var subHeight=Math.abs(y-this.offsetY)-tempHeight;
-			var Vx=(this.offsetX-x)*(this.prevX-x)<0;
-			var Vy=(this.offsetY-y)*(this.prevY-y)<0;
-			if(subWidth<0&&subHeight<0||Vx||Vy){
+			if(subWidth<0&&subHeight<0||_goCoord.call(this,x,y)){
 				var d=fun(Sprite);
 				return d;
 			};
@@ -123,7 +123,7 @@ var game=window.game||(function(){
 			layer.removeSprite(this);
 		};
 		_sprite.prototype.goCoord=function(x,y,fun){
-			_goCoord.call(this,x,y,fun);
+			return _goCoord.call(this,x,y,fun);
 		};
 		_sprite.prototype.followTo=function(sprite,fun){
 			var that=this;

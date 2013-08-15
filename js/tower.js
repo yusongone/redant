@@ -92,6 +92,24 @@ function init(){
 
 	var runA=game.LayerFactory.createLayer();
 		runA.setCoord(0,0);
+		function Life(width,height){
+			this.life=100;
+			sprite.call(this,width,height);
+				var ctx=this.ctx;
+				ctx.save();
+				ctx.fillStyle="green";
+				ctx.fillRect(0,0,30,5);
+				ctx.restore();
+		};
+		game.funLib.extend(sprite,Life);
+		Life.prototype.sub=function(num){
+				this.life-=num;
+			var ctx=this.ctx;
+			ctx.clearRect(0,0,this.width,this.height);
+			var w=this.life/100*this.width;
+			ctx.fillRect(0,0,w,this.height);
+		};
+
 
 		var gw=new sprite(30,30);
 			gw.setCenter(map[0].x,map[0].y);
@@ -112,7 +130,14 @@ function init(){
 			});
 		};
 		goto(map[1].x,map[1].y);
+		var life=new Life(30,5);
+			life.setCenter(gw.offsetX,gw.offsetY-20);
+			gw.life=life;
 		runA.append(gw);
+		runA.append(life);
+			game.Animation.setFrame(life.name+"dw",function(){
+				life.setCenter(gw.offsetX,gw.offsetY-23);
+			});
 
 		var tf=new sprite(30,30);
 			tf.setCenter(255.5,135.5);
@@ -134,6 +159,7 @@ function init(){
 		bul.setCenter(tf.centerX,tf.centerY);
 		bul.followTo(gw,function(){
 				this.distroy();
+				gw.life.sub(10);
 		});
 		runA.append(bul);
 			},3000);
