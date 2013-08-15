@@ -51,10 +51,11 @@ game.File.addFile([
 		game.Animation.setFrame("dd",function(){
 			l1.setCoord(10,left++);
 			if(left==4){
+				alert("");
 			}
 		},500);
 	var Tank2=new sprite(30,30);	
-		Tank2.setCenter(500,100);
+		Tank2.setCenter(300,100);
 		var width=30;
 		Tank2.ctx.fillRect(0,0,width,30);
 		Tank2.sub=function(){
@@ -79,7 +80,7 @@ game.File.addFile([
 				that.setCenter(Tank.centerX,Tank.centerY);
 				//bul.removeFrame("moveTo");
 			}
-				that.checkHit({"tank":Tank2},temp);
+			that.checkHit({"tank":Tank2},temp);
 		});
 	var l2=game.LayerFactory.createLayer("button");
 	var test=new sprite(50,50);

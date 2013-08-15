@@ -62,13 +62,9 @@ var game=window.game||(function(){
 			var tempWidth=(Sprite.width+this.width)/2;
 			var subWidth=Math.abs(x-this.offsetX)-tempWidth;
 			var subHeight=Math.abs(y-this.offsetY)-tempHeight;
-			var now_Sprite_Space=game.funLib.getSpaceBetweenDoubleCoord(this.offsetX,this.offsetY,x,y);
-			var Prev_Sprite_Space=game.funLib.getSpaceBetweenDoubleCoord(x,y,this.prevX,this.prevY);
-			var now_Prev_Space=game.funLib.getSpaceBetweenDoubleCoord(this.offsetX,this.offsetY,this.prevX,this.prevY);
-			var d=now_Prev_Space-(now_Sprite_Space+Prev_Sprite_Space);
-				d=(Math.abs(d.toFixed(6))<1);
-			console.log(d);
-			if(subWidth<0&&subHeight<0||d){
+			var Vx=(this.offsetX-x)*(this.prevX-x)<0;
+			var Vy=(this.offsetY-y)*(this.prevY-y)<0;
+			if(subWidth<0&&subHeight<0||Vx||Vy){
 				var d=fun(Sprite);
 				if(d===false){return ;};
 			};
@@ -155,8 +151,8 @@ var game=window.game||(function(){
 		}
 		//do this Frame function when Animation's Frame;
 		_sprite.prototype.oneFrameFun=function(animateData){
-				this.prevX=this.centerX;
-				this.prevY=this.centerY;
+				this.prevX=this.offsetX;
+				this.prevY=this.offsetY;
 				this.drawMyCanvas(animateData);
 		};
 		// set this all Image Data,e.g. coord, size ,img object;
