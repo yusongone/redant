@@ -85,7 +85,7 @@ function init(){
 				b.ctx.restore();
 			}
 		layerBackground.append(b);
-		$("body").click(function(){
+		$("#box").click(function(){
 			game.Progress.start();	
 		});	
 
