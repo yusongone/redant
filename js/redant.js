@@ -59,10 +59,12 @@ var game=window.game||(function(){
 			this.spriteCanvas=tempCanvas;
 			this.ctx=tempCanvas.getContext("2d");
 		};
+		var i=0;
 		function _goCoord(x,y,fun){
 			var Vx=(this.offsetX-x)*(this.prevX-x)<0;
 			var Vy=(this.offsetY-y)*(this.prevY-y)<0;
 			if(Vx||Vy){
+				game.speak("hit"+(i++));
 				fun?fun():"";
 				return true;
 			};
@@ -472,7 +474,6 @@ var game=window.game||(function(){
 			}
 		}
 	})();
-
 	/*
 	 * main of game engine 
 	 */
@@ -571,6 +572,9 @@ var game=window.game||(function(){
 			Progress:_progress,
 			Animation:Animation,
 			funLib:_funLib,
+			speak:function(str){
+				document.getElementById("test").innerText=str;
+			},
 			// get times of pause uesd;
 			getPauseUsedTime:function(){
 				var temp=_pauseUsedTime;
