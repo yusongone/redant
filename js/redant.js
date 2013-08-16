@@ -61,10 +61,11 @@ var game=window.game||(function(){
 		};
 		var i=0;
 		function _goCoord(x,y,fun){
-			var Vx=(this.offsetX-x)*(this.prevX-x)<0;
-			var Vy=(this.offsetY-y)*(this.prevY-y)<0;
-			if(Vx||Vy){
-				game.speak("hit"+(i++));
+			var ox=this.offsetX,oy=this.offsetY,px=this.prevX,py=this.prevY;
+			var Vx=(ox-x)*(px-x)<0;
+			var Vy=(oy-y)*(py-y)<0;
+			var inC=(oy-py)==oy-y&&(ox-px)==ox-x;
+			if(Vx||Vy||inC){
 				fun?fun():"";
 				return true;
 			};
