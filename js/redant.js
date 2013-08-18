@@ -10,6 +10,9 @@ var game=window.game||(function(){
 			this.coordX=x||this.coordX;
 			this.coordY=y||this.coordY;
 		};
+		layer.prototype.clearLayer=function(){
+			this.spriteList.length=0;
+		};
 		layer.prototype.removeSprite=function(obj){
 			var that=this;
 			game.funLib.selectArrayByObj(this.spriteList,obj,function(i){
@@ -19,6 +22,7 @@ var game=window.game||(function(){
 		};
 		layer.prototype.append=function(obj){
 			obj.layer=this;
+			this.removeSprite(obj);
 			this.spriteList.push(obj);
 		};
 		layer.prototype.toTop=function(){
@@ -113,7 +117,9 @@ var game=window.game||(function(){
 			this.prevY=0;
 			this.speed=0;
 			this.angle=0;
+			this.frameFunList={};
 			_createTempCanvas.call(this);
+			
 		};	
 		_sprite.prototype.test=function(){
 				alert("test");
@@ -199,14 +205,25 @@ var game=window.game||(function(){
 				ctx.rotate(Math.PI*2/360*this.angle);
 				ctx.translate(-oX,-oY);
 				ctx.drawImage(this.spriteCanvas,drawX,drawY,this.width,this.height);
+				ctx.strokeStyle="#999";
 				ctx.strokeRect(drawX,drawY,this.width,this.height);
 				ctx.restore();
 		}
 		//do this Frame function when Animation's Frame;
 		_sprite.prototype.oneFrameFun=function(animateData){
-				this.prevX=this.offsetX;
-				this.prevY=this.offsetY;
+			var that=this;
+				that.prevX=that.offsetX;
+				that.prevY=that.offsetY;
+				for(var i in that.frameFunList){
+					that.frameFunList[i].call(this);
+				}
 				this.drawMyCanvas(animateData);
+		};
+		_sprite.prototype.addFrameFun=function(name,fun){
+			this.frameFunList[name]=fun;
+		};
+		_sprite.prototype.removeFrameFun=function(name){
+			delete this.frameFunList[name];
 		};
 		// set this all Image Data,e.g. coord, size ,img object;
 		_sprite.prototype.setImageData=function(name,json){
@@ -441,13 +458,13 @@ var game=window.game||(function(){
 			}
 		};
 		function _click(evt){
+			var bool=true;		
 			Animation.parseLayerList(function(layer){
-				var bool=true;		
 				_getChildSprite(layer.spriteList,function(sprite){
 					if(sprite.isInLocal(evt.offsetX,evt.offsetY)){
 						var cf=sprite.clickFun;
 						for(var i=0,l=cf.length;i<l;i++){
-								if(false===cf[i](evt.offsetX,evt.offsetY)){
+								if(false===cf[i].call(this,evt.offsetX,evt.offsetY)){
 									bool=false;	
 								};
 						};
@@ -455,20 +472,20 @@ var game=window.game||(function(){
 					};
 				});
 				//
+			});
 				if(bool){
 					for(var i =_clickFun.length-1,l=-1;i>l;i--){
-						_clickFun[i]({"x":evt.offsetX,"y":evt.offsetY});
+						_clickFun[i](evt.offsetX,evt.offsetY);
 					};
 				}
 				return bool;
-			});
 		};
 		function _bindClick(){
 			var _canvas=Animation.getCanvas();
 				_canvas.addEventListener("click",function(evt){
 					_click(evt);	
 				},false);
-		}
+		};
 		return {
 			init:function(){
 				 _bindClick();
