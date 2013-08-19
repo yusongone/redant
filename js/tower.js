@@ -73,6 +73,7 @@ var path=(function(){
 				index++;
 				if(index==_map.length){
 					monsterFactory.distroyMonster(obj);
+					path.exitObj.life.sub(10);
 					return false;
 				};
 				_goto(_map[index].x,_map[index].y,obj,index);
@@ -142,21 +143,22 @@ var monsterFactory=(function (){
 	var _monsterList=[];
 	//
 		function Life(width,height){
-			this.life=100;
 			sprite.call(this,width,height);
 				var ctx=this.ctx;
 				ctx.save();
 				ctx.fillStyle="green";
 				ctx.fillRect(0,0,30,5);
 				ctx.restore();
+			this.quantity=1;
 		};
 		game.funLib.extend(sprite,Life);
 		Life.prototype.sub=function(num){
-				this.life-=num;
+			this.quantity-=num/this.value;
+			this.quantity=this.quantity.toFixed(4);
 			var ctx=this.ctx;
 			ctx.fillStyle="green";
 			ctx.clearRect(0,0,this.width,this.height);
-			var w=this.life/100*this.width;
+			var w=this.quantity*this.width;
 			ctx.fillRect(0,0,w,this.height);
 		};
 	//
@@ -170,9 +172,13 @@ var monsterFactory=(function (){
 		game.funLib.extend(sprite,gwA);
 		gwA.prototype.injure=function(num){
 			this.life.sub(num);
+			if(!(this.life.quantity>0)){
+				_distroyMonster(this);
+			};
 		};
 		gwA.prototype.createLife=function(){
 			var life=new Life(20,5);
+				life.value=100;
 				life.setCenter(this.offsetX,this.offsetY-20);
 			monsterLayer.append(life);
 			this.life=life;
@@ -212,7 +218,7 @@ var monsterFactory=(function (){
 				_monsterList.splice(index,1);	
 				obj.distroy();
 				obj.life.distroy();
-				path.exitObj.life.sub(10);
+				obj.bul.distroy();
 			});
 		};
 
@@ -229,13 +235,13 @@ var monsterFactory=(function (){
 			var map=path.map;
 			var i=0;
 			game.Animation.setFrame("createMonster",function(){
-				if(i==4){game.Animation.removeFrame("createMonster");_checkNoMonster();return false;};
+				if(i==6){game.Animation.removeFrame("createMonster");_checkNoMonster();return false;};
 				i++;
 				var gw=new gwA(20,20);
 				_monsterList.push(gw);
 				gw.setCenter(map[0].x,map[0].y);
 				path.goto(map[1].x,map[1].y,gw,1);
-			},800);				  
+			},1000);				  
 		}
 
 	return {
@@ -287,7 +293,7 @@ var towerFactory=(function(){
 				ctx.restore();
 		};
 		towerA.prototype.initBul=function(){
-			var _bul=new bul2();
+			var _bul=new bul();
 				_bul.angle=this.angle;
 				_bul.setCenter(this.centerX,this.centerY);
 				layer.append(_bul);
@@ -317,7 +323,7 @@ var towerFactory=(function(){
 				var hitGoal=that.hitGoal;
 				if(hitGoal){
 					that.bul.followTo(hitGoal,function(){
-							hitGoal.injure(10);
+							hitGoal.injure(20);
 							this.setCenter(that.centerX,that.centerY);
 					});
 				};
