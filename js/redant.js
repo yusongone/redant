@@ -147,7 +147,9 @@ var game=window.game||(function(){
 					fun.call(that);
 				});
 			});
-
+		};
+		_sprite.prototype.stop=function(x,y,fun){
+			game.Animation.removeFrame(this.name+"moveTo");
 		};
 		_sprite.prototype.moveTo=function(x,y,fun){
 			var that=this;
@@ -215,7 +217,7 @@ var game=window.game||(function(){
 				that.prevX=that.offsetX;
 				that.prevY=that.offsetY;
 				for(var i in that.frameFunList){
-					that.frameFunList[i].call(this);
+					that.frameFunList[i].call(this,animateData);
 				}
 				this.drawMyCanvas(animateData);
 		};

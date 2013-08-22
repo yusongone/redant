@@ -67,18 +67,6 @@ var path=(function(){
 				ctx.stroke();
 		layerBackground.append(Path);
 
-
-		function _goto(x,y,obj,index){
-			obj.moveTo(x,y,function(){
-				index++;
-				if(index==_map.length){
-					monsterFactory.distroyMonster(obj);
-					path.exitObj.life.sub(10);
-					return false;
-				};
-				_goto(_map[index].x,_map[index].y,obj,index);
-			});
-		};
 		function _checkInPath(index,x,y){
 			if(!(index<_map.length-1)){
 				return false;
@@ -130,7 +118,6 @@ var path=(function(){
 		exitObj:jg,
 		layer:_layer,
 		map:_map,
-		goto:_goto,
 		checkInPath:function(x,y){
 			var re=_checkInPath(0,x,y);		
 			return re;
@@ -165,6 +152,8 @@ var monsterFactory=(function (){
 		function gwA(width,height){
 			sprite.call(this,width,height);	
 			this.speed=50;
+			this.map=path.map;
+			this.mapIndex=0;
 			monsterLayer.append(this);
 			this.reUI();
 			this.createLife();
@@ -173,6 +162,7 @@ var monsterFactory=(function (){
 		gwA.prototype.injure=function(num){
 			this.life.sub(num);
 			if(!(this.life.quantity>0)){
+				this.stop();
 				_distroyMonster(this);
 			};
 		};
@@ -185,6 +175,20 @@ var monsterFactory=(function (){
 			this.addFrameFun("updateLifeCoord",function(){
 				life.setCenter(this.offsetX,this.offsetY-15);
 			});
+		};
+		gwA.prototype.goTo=function(){
+			var that=this;
+			var index=that.mapIndex;
+			if(index==that.map.length){
+				monsterFactory.distroyMonster(that);
+				path.exitObj.life.sub(10);
+				return false;
+			}else{
+				this.moveTo(that.map[index].x,that.map[index].y,function(){
+					that.goTo();	
+				});
+				that.mapIndex++;
+			};
 		};
 		gwA.prototype.reUI=function(){
 				var ctx=this.ctx;
@@ -204,7 +208,15 @@ var monsterFactory=(function (){
 		game.funLib.extend(sprite,gwB);
 		gwB.prototype.test=function(){
 				
-		}
+		};
+		gwB.prototype.goTo=function(){
+			var that=this;
+			var index=that.mapIndex;
+			this.moveTo(that.map[index].x,that.map[index].y,function(){
+				that.goTo();	
+			});
+			that.mapIndex++;
+		};
 		gwB.prototype.reUI=function(){
 				var ctx=this.ctx;
 				ctx.save();
@@ -218,7 +230,6 @@ var monsterFactory=(function (){
 				_monsterList.splice(index,1);	
 				obj.distroy();
 				obj.life.distroy();
-				obj.bul.distroy();
 			});
 		};
 
@@ -240,7 +251,8 @@ var monsterFactory=(function (){
 				var gw=new gwA(20,20);
 				_monsterList.push(gw);
 				gw.setCenter(map[0].x,map[0].y);
-				path.goto(map[1].x,map[1].y,gw,1);
+				gw.goTo();
+				//path.goto(map[1].x,map[1].y,gw,1);
 			},1000);				  
 		}
 
