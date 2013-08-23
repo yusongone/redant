@@ -4,8 +4,32 @@
 		<meta charset="utf-8">
 		<title>abf</title>
 		<style>
-			*{margin:0;padding:0;}
-			#box{border:1px solid #ddd;width:480px;height:320px;position:absolute;top:50%;left:50%;margin-left:-240px;margin-top:-160px;}
+			*{margin:0;padding:0;list-style:none;}
+			#layOut{
+				border:1px solid #ddd;
+				width:480px;
+				height:320px;
+				position:absolute;
+				top:50%;
+				left:50%;
+				margin-left:-240px;
+				margin-top:-160px;
+			}
+			.relative{position:relative;}
+			#box{
+				
+			}
+			#topBar{
+				position:absolute;
+				top:0px;
+				left:50%;
+				width:320px;
+				height:50px;
+				margin-left:-160px;
+				background:rgba(70,70,70,0.4);
+				border-bottom-left-radius:10px;
+				border-bottom-right-radius:10px;
+			}
 		</style>
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0, maximum-scale=1">
 		<meta name="apple-mobile-web-app-capable" content="yes" />
@@ -16,7 +40,16 @@
 		</script>
 	</head>
 	<body onload="init()">
-			<div id="box">
+			<div id="layOut">
+				<div class="relative">
+					<div id="box"></div>
+					<div id="topBar">
+						<ul>
+							<li id="money">50</li>
+							<li id="time"></li>
+						</ul>
+					</div>
+				</div>
 			</div>
 			<div id="test">
 			</div>

@@ -159,6 +159,7 @@ var monsterFactory=(function (){
 			this.mapIndex=0;
 			monsterLayer.append(this);
 			this.reUI();
+			this.money=5;
 			this.createLife();
 		}
 		game.funLib.extend(sprite,gwA);
@@ -166,6 +167,7 @@ var monsterFactory=(function (){
 			this.life.sub(num);
 			if(!(this.life.quantity>0)){
 				this.stop();
+				main.addMoney(this.money);
 				_distroyMonster(this);
 			};
 		};
@@ -206,6 +208,7 @@ var monsterFactory=(function (){
 		function gwB(width,height){
 			gwA.call(this,width,height);	
 			this.speed=50;
+			this.money=10;
 			this.reUI();
 		}
 		game.funLib.extend(gwA,gwB);
@@ -368,7 +371,7 @@ var towerCreateDiv=(function(){
 
 		function towerA(){
 			sprite.call(this);
-			this.money=10;
+			this.pay=10;
 			this.reUI();
 		}
 		game.funLib.extend(sprite,towerA);
@@ -379,7 +382,6 @@ var towerCreateDiv=(function(){
 		}
 		function MyLocal(){
 			sprite.call(this);
-			this.money=10;
 			this.reUI();
 		}
 		game.funLib.extend(sprite,MyLocal);
@@ -419,7 +421,7 @@ var towerCreateDiv=(function(){
 })();
 
 var main=(function(){
-	var _money=0;
+	var _money=50;
 	var _orderForm=[
 		["gwA","gwA","gwA"],
 		["gwB","gwB","gwA"],
@@ -427,4 +429,26 @@ var main=(function(){
 		["gwB","gwB","gwB","gwA","gwA","gwA"]
 	]
 	monsterFactory.setOrderForm(_orderForm);
+
+	return {
+		addMoney:function(value){
+	var moneyDiv=$("#money");	
+			_money+=value;
+			moneyDiv.text(_money);
+		},
+		checkMoney:function(){
+			return _money;
+		},
+		spendMoney:function(value){
+			_money-=value;
+			moneyDiv.text(_money);
+		}
+	}
+})();
+
+var topBar=(function(){
+	var ui=$("#topBar");
+	return {
+	
+	}
 })();
