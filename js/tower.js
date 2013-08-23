@@ -22,7 +22,7 @@ function init(){
 		});
 		game.appendTo(document.getElementById("box"));
 
-		monsterFactory.createSomeMonster();
+		monsterFactory.createSomeMonster(["gwA","gwB","gwA","gwB"]);
 		monsterFactory.layer.toTop();
 		return false;
 };
@@ -128,6 +128,9 @@ var monsterFactory=(function (){
 	var monsterLayer=path.layer;
 	var sprite=game.SpriteFactory.getSpriteEntity();
 	var _monsterList=[];
+	var Factory={"gwA":gwA,"gwB":gwB};
+	var _orderForm=null;
+	var _orderIndex=0;
 	//
 		function Life(width,height){
 			sprite.call(this,width,height);
@@ -201,21 +204,13 @@ var monsterFactory=(function (){
 		};
 		//gwB
 		function gwB(width,height){
-			sprite.call(this,width,height);	
+			gwA.call(this,width,height);	
 			this.speed=50;
 			this.reUI();
 		}
-		game.funLib.extend(sprite,gwB);
+		game.funLib.extend(gwA,gwB);
 		gwB.prototype.test=function(){
 				
-		};
-		gwB.prototype.goTo=function(){
-			var that=this;
-			var index=that.mapIndex;
-			this.moveTo(that.map[index].x,that.map[index].y,function(){
-				that.goTo();	
-			});
-			that.mapIndex++;
 		};
 		gwB.prototype.reUI=function(){
 				var ctx=this.ctx;
@@ -224,6 +219,8 @@ var monsterFactory=(function (){
 				ctx.fillRect(0,0,30,30);
 				ctx.restore();
 		};
+
+
 
 		function _distroyMonster(obj){
 			var d=game.funLib.selectArrayByObj(_monsterList,obj,function(index){
@@ -235,7 +232,7 @@ var monsterFactory=(function (){
 
 		function _checkNoMonster(){
 			game.Animation.setFrame("checkNo",function(){
-				if(_monsterList.length<1){
+				if(_monsterList.length<1&&_orderForm.length>_orderIndex){
 						_createSomeMonster();
 						game.Animation.removeFrame("checkNo");
 				}
@@ -244,14 +241,17 @@ var monsterFactory=(function (){
 
 		function _createSomeMonster(){
 			var map=path.map;
+			var Ary=_orderForm[_orderIndex++];
+			var length=Ary.length;
 			var i=0;
 			game.Animation.setFrame("createMonster",function(){
-				if(i==6){game.Animation.removeFrame("createMonster");_checkNoMonster();return false;};
-				i++;
-				var gw=new gwA(20,20);
+				if(i==length){game.Animation.removeFrame("createMonster");_checkNoMonster();return false;};
+				var GA=Factory[Ary[i]];
+				var gw=new GA(20,20);
 				_monsterList.push(gw);
 				gw.setCenter(map[0].x,map[0].y);
 				gw.goTo();
+				i++;
 				//path.goto(map[1].x,map[1].y,gw,1);
 			},1000);				  
 		}
@@ -260,13 +260,10 @@ var monsterFactory=(function (){
 		layer:monsterLayer,
 		monsterList:_monsterList,
 		distroyMonster:_distroyMonster,
-		getA:function(){
-			var gw=new gwA(30,30);
-			gw.setCenter(100,100);
-			return gw;
-		},
-		createSomeMonster:_createSomeMonster
-	
+		createSomeMonster:_createSomeMonster,
+		setOrderForm:function(ary){
+			_orderForm=ary;	
+		}
 	}
 })();
 
@@ -423,4 +420,11 @@ var towerCreateDiv=(function(){
 
 var main=(function(){
 	var _money=0;
+	var _orderForm=[
+		["gwA","gwA","gwA"],
+		["gwB","gwB","gwA"],
+		["gwA","gwB","gwB","gwA"],
+		["gwB","gwB","gwB","gwA","gwA","gwA"]
+	]
+	monsterFactory.setOrderForm(_orderForm);
 })();
