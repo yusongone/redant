@@ -5,6 +5,7 @@ var game=window.game||(function(){
 			this.spriteList=[];
 			this.coordX=0;
 			this.coordY=0;
+			this.hide=0;
 		};
 		layer.prototype.setCoord=function(x,y){
 			this.coordX=x||this.coordX;
@@ -127,6 +128,12 @@ var game=window.game||(function(){
 		_sprite.prototype.speak=function(str){
 			console.log(this.name+":"+str);
 		};
+		_sprite.prototype.setFrame=function(name,fun,time){
+				fun.startTime=0;//(new Date()).getTime();
+				fun.fpsTime=time||0;
+				fun.surplusTime=0;
+				this.FrameFun[name]=fun;
+		};
 		_sprite.prototype.distroy=function(x,y,fun){
 			var layer=this.layer;
 			layer.removeSprite(this);
@@ -150,6 +157,10 @@ var game=window.game||(function(){
 		};
 		_sprite.prototype.stop=function(x,y,fun){
 			game.Animation.removeFrame(this.name+"moveTo");
+		};
+		_sprite.prototype.faceTo=function(obj){
+			var that=this;
+			that.angle=game.funLib.getAngle(that.offsetX,that.offsetY,obj.offsetX,obj.offsetY);
 		};
 		_sprite.prototype.moveTo=function(x,y,fun){
 			var that=this;
@@ -218,6 +229,19 @@ var game=window.game||(function(){
 				that.prevY=that.offsetY;
 				for(var i in that.frameFunList){
 					that.frameFunList[i].call(this,animateData);
+				}
+				var now=animateData.now;
+				var d=animateData.pauseUsedTime;
+				for(var i in this.FrameFun){
+					var fun=this.FrameFun[i];
+					fun.startTime=fun.startTime||now;
+					var useTime=now-fun.startTime;
+					if(fun.fpsTime<(useTime+fun.surplusTime)){
+						animateData.useTime=useTime-d;
+						fun.call(this,animateData);
+						fun.startTime=now;
+						fun.surplusTime=useTime-fun.fpsTime+fun.surplusTime-d;
+					}
 				}
 				this.drawMyCanvas(animateData);
 		};
@@ -297,6 +321,7 @@ var game=window.game||(function(){
 			_parseLayerList(function(_layer){
 				var _childList=_layer.spriteList;
 				var length=_childList.length;
+				if(_layer.hide){return false;}
 				for(var i=0;i<length;i++){
 					_childList[i].oneFrameFun(_AnimateData);
 				};
@@ -462,6 +487,7 @@ var game=window.game||(function(){
 		function _click(evt){
 			var bool=true;		
 			Animation.parseLayerList(function(layer){
+				if(layer.hide){return false;}
 				_getChildSprite(layer.spriteList,function(sprite){
 					if(sprite.isInLocal(evt.offsetX,evt.offsetY)){
 						var cf=sprite.clickFun;

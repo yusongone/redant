@@ -285,34 +285,13 @@ var towerFactory=(function(){
 			this.speed=100;
 		}
 		game.funLib.extend(sprite,bul2);
-		
-		function towerA(x,y){
+		function tower(){
 			sprite.call(this,20,20);
-			this.reUI();
-			this.setCenter(x,y);
-			this.hitSpace=100;
-			this.hitGoal=null;
-			this.tour();
-			this.initBul();
-			this.fire();
-		};
-		game.funLib.extend(sprite,towerA);
-		towerA.prototype.reUI=function(){
-				var ctx=this.ctx;
-				ctx.save();
-				ctx.fillStyle="yellow";
-				ctx.fillRect(0,0,this.width,this.height);
-				ctx.restore();
-		};
-		towerA.prototype.initBul=function(){
-			var _bul=new bul();
-				_bul.angle=this.angle;
-				_bul.setCenter(this.centerX,this.centerY);
-				layer.append(_bul);
-				this.bul=_bul;
-		};
+		
+		};	
+		game.funLib.extend(sprite,tower);
 		//巡视
-		towerA.prototype.tour=function(){
+		tower.prototype.tour=function(){
 			var monsterList=monsterFactory.monsterList;
 			var getSpace=game.funLib.getSpaceBetweenDoubleCoord;
 			var that=this;
@@ -322,6 +301,7 @@ var towerFactory=(function(){
 					var space=getSpace(tempM.offsetX,tempM.offsetY,that.offsetX,that.offsetY);	
 					if(space<that.hitSpace){
 						that.hitGoal=tempM;
+						that.faceTo(tempM);
 						return;
 					}
 				};	
@@ -329,22 +309,75 @@ var towerFactory=(function(){
 			};	
 			this.addFrameFun("tour",tour);
 		};
-		towerA.prototype.fire=function(){
+		//发射
+		tower.prototype.fire=function(){
 			var that=this;
 			game.Animation.setFrame(this.name+"fire",function(){
 				var hitGoal=that.hitGoal;
 				if(hitGoal){
 					that.bul.followTo(hitGoal,function(){
 							hitGoal.injure(20);
+							this.angle=that.angle;
 							this.setCenter(that.centerX,that.centerY);
 					});
 				};
 			},1000);
 		};
+		tower.prototype.initBul=function(_bul){
+				_bul.angle=this.angle;
+				_bul.setCenter(this.centerX,this.centerY);
+				layer.append(_bul);
+				this.bul=_bul;
+		};
+
+
+		function towerA(x,y){
+			tower.call(this,20,20);
+			this.reUI();
+			this.setCenter(x,y);
+			this.hitSpace=100;
+			this.hitGoal=null;
+			this.tour();
+			this.initBul(new bul());
+			this.fire();
+		};
+		game.funLib.extend(tower,towerA);
+		towerA.prototype.reUI=function(){
+				var ctx=this.ctx;
+				ctx.save();
+				ctx.fillStyle="red";
+				ctx.arc(this.width/2,this.height/2,10,0,2*Math.PI,false);
+				ctx.fillRect(this.width/2-5,0,this.width/2,this.height);
+				ctx.stroke();
+				ctx.restore();
+		};
+		function towerB(x,y){
+			tower.call(this,20,20);
+			this.reUI();
+			this.setCenter(x,y);
+			this.hitSpace=100;
+			this.hitGoal=null;
+			this.tour();
+			this.initBul(new bul2());
+			this.fire();
+		};
+		game.funLib.extend(tower,towerB);
+		towerB.prototype.reUI=function(){
+				var ctx=this.ctx;
+				ctx.save();
+				ctx.fillStyle="green";
+				ctx.arc(this.width/2,this.height/2,10,0,2*Math.PI,false);
+				ctx.fillRect(this.width/2-5,0,this.width/2,this.height);
+				ctx.stroke();
+				ctx.restore();
+		};
+
+		var Factory={"towerA":towerA,"towerB":towerB};
 		
 		return {
-			getTower:function(x,y){
-				var tA=new towerA(x,y);
+			getTower:function(x,y,type){
+				var tw=Factory[type];
+				var tA=new tw(x,y);
 					layer.append(tA);
 					tA.click(function(){
 						return false;
@@ -368,18 +401,20 @@ var towerCreateDiv=(function(){
 	var creatLayer=game.LayerFactory.createLayer();
 	var sprite=game.SpriteFactory.getSpriteEntity();
 	var _show=0;
-
-		function towerA(){
-			sprite.call(this);
-			this.pay=10;
+		function background(width,height){
+			sprite.call(this,width,height);
 			this.reUI();
 		}
-		game.funLib.extend(sprite,towerA);
-		towerA.prototype.reUI=function(){
-			var ctx=this.ctx;	
-				ctx.fillStyle="yellow";
+		game.funLib.extend(sprite,background);
+		background.prototype.reUI=function(){
+			var ctx=this.ctx;
+				ctx.save();
+				ctx.fillStyle="#ddd";
 				ctx.fillRect(0,0,this.width,this.height);
+				ctx.stroke();
+				ctx.restore();
 		}
+
 		function MyLocal(){
 			sprite.call(this);
 			this.reUI();
@@ -387,33 +422,91 @@ var towerCreateDiv=(function(){
 		game.funLib.extend(sprite,MyLocal);
 		MyLocal.prototype.reUI=function(){
 			var ctx=this.ctx;
-				ctx.fillStyle="#ddd";
-				ctx.fillRect(0,0,40,40);
-			
+				ctx.save();
+				ctx.fillStyle="red";
+				ctx.arc(this.width/2,this.height/2,10,0,2*Math.PI,false);
+				ctx.moveTo(this.width/2,0);
+				ctx.lineTo(this.width/2,this.height);
+				ctx.moveTo(0,this.height/2);
+				ctx.lineTo(this.width,this.height/2);
+				ctx.fillRect(this.width/2-5,this.height/2-5,this.width/2,this.height/2);
+				ctx.stroke();
+				ctx.restore();
 		}
+		function tower(){
+			sprite.call(this,40,40);
+			this.bindEvent();	
+		};
+		game.funLib.extend(sprite,tower);
+		tower.prototype.bindEvent=function(){
+			var that=this;
+			this.click(function(){
+						var cx=creatLayer.coordX;
+						var cy=creatLayer.coordY;
+						towerFactory.getTower(cx+30,cy+30,that.type);
+						towerCreateDiv.toggleTowerDiv();
+						return false;
+			});
+		};
+		function towerA(){
+			tower.call(this);
+			this.pay=10;
+			this.type="towerA"
+			this.reUI();
+		}
+		game.funLib.extend(tower,towerA);
+		tower.prototype.reUI=function(){
+			var ctx=this.ctx;	
+				ctx.save();
+				ctx.fillStyle="red";
+				ctx.arc(this.width/2,this.height/2,this.width/2,0,2*Math.PI,false);
+				ctx.fillRect(this.width/2-5,0,10,this.height);
+				ctx.stroke();
+				ctx.restore();
+		}
+		function towerB(){
+			tower.call(this,40,40);
+			this.pay=10;
+			this.type="towerB"
+			this.reUI();
+		}
+		game.funLib.extend(tower,towerB);
+		towerB.prototype.reUI=function(){
+			var ctx=this.ctx;	
+				ctx.save();
+				ctx.fillStyle="green";
+				ctx.arc(this.width/2,this.height/2,this.width/2,0,2*Math.PI,false);
+				ctx.fillRect(this.width/2-5,0,10,this.height);
+				ctx.stroke();
+				ctx.restore();
+		}
+				var bk=new background(120,45);
 				var tA=new towerA(10,10);
+				var tB=new towerB(10,10);
 				var ML=new MyLocal(10,10);
 					ML.click(function(){return false;});
 					tA.click(function(cx,cy){
-						var cx=creatLayer.coordX;
-						var cy=creatLayer.coordY;
-						towerFactory.getTower(cx+30,cy+30);
-						towerCreateDiv.toggleTowerDiv();
-						return false;
 					});
+					creatLayer.append(bk);
+					creatLayer.append(tA);
+					creatLayer.append(tB);
+					creatLayer.append(ML);
+					bk.setCenter(30,-10);
+					ML.setCenter(30,30);
+					tA.setCenter(0,-10);
+					tB.setCenter(45,-10);
+					creatLayer.hide=1;
 	return {
 			toggleTowerDiv:function(x,y){
 				if(_show){
-					creatLayer.clearLayer();
+					//creatLayer.clearLayer();
+					creatLayer.hide=1;
 					_show=0;
 				}else{
 					_show=1;
+					creatLayer.hide=0;
 					creatLayer.toTop();
-					creatLayer.append(tA);
-					creatLayer.append(ML);
 					creatLayer.setCoord(x-30,y-30);
-					ML.setCenter(30,30);
-					tA.setCenter(0,0);
 				}
 			}
 	}
@@ -426,6 +519,11 @@ var main=(function(){
 		["gwA","gwA","gwA"],
 		["gwB","gwB","gwA"],
 		["gwA","gwB","gwB","gwA"],
+		["gwB","gwB","gwB","gwA","gwA","gwA"],
+		["gwB","gwB","gwB","gwA","gwA","gwA"],
+		["gwB","gwB","gwB","gwA","gwA","gwA"],
+		["gwB","gwB","gwB","gwA","gwA","gwA"],
+		["gwB","gwB","gwB","gwA","gwA","gwA"],
 		["gwB","gwB","gwB","gwA","gwA","gwA"]
 	]
 	monsterFactory.setOrderForm(_orderForm);
