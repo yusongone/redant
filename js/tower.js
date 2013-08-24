@@ -105,6 +105,7 @@ var path=(function(){
 		var jg;
 		function createExit(){
 				jg=new sprite(30,30);				
+				jg.turn(3);
 				var tempX=_map[length-1].x;
 				var tempY=_map[length-1].y;
 				jg.setCenter(tempX,tempY);
@@ -151,19 +152,17 @@ var monsterFactory=(function (){
 			var w=this.quantity*this.width;
 			ctx.fillRect(0,0,w,this.height);
 		};
-	//
-		function gwA(width,height){
+
+
+		function gw(width,height){
 			sprite.call(this,width,height);	
-			this.speed=50;
-			this.map=path.map;
 			this.mapIndex=0;
 			monsterLayer.append(this);
-			this.reUI();
-			this.money=5;
 			this.createLife();
+			this.reUI();
 		}
-		game.funLib.extend(sprite,gwA);
-		gwA.prototype.injure=function(num){
+		game.funLib.extend(sprite,gw);
+		gw.prototype.injure=function(num){
 			this.life.sub(num);
 			if(!(this.life.quantity>0)){
 				this.stop();
@@ -171,9 +170,23 @@ var monsterFactory=(function (){
 				_distroyMonster(this);
 			};
 		};
-		gwA.prototype.createLife=function(){
-			var life=new Life(20,5);
-				life.value=100;
+		gw.prototype.goTo=function(){
+			var that=this;
+			var index=that.mapIndex;
+			if(index==path.map.length){
+				monsterFactory.distroyMonster(that);
+				path.exitObj.life.sub(10);
+				return false;
+			}else{
+				this.moveTo(path.map[index].x,path.map[index].y,function(){
+					that.goTo();	
+				});
+				that.mapIndex++;
+			};
+		};
+		gw.prototype.createLife=function(){
+			var life=new Life(this.width,5);
+				life.value=this.lifeValue;
 				life.setCenter(this.offsetX,this.offsetY-20);
 			monsterLayer.append(life);
 			this.life=life;
@@ -181,20 +194,14 @@ var monsterFactory=(function (){
 				life.setCenter(this.offsetX,this.offsetY-15);
 			});
 		};
-		gwA.prototype.goTo=function(){
-			var that=this;
-			var index=that.mapIndex;
-			if(index==that.map.length){
-				monsterFactory.distroyMonster(that);
-				path.exitObj.life.sub(10);
-				return false;
-			}else{
-				this.moveTo(that.map[index].x,that.map[index].y,function(){
-					that.goTo();	
-				});
-				that.mapIndex++;
-			};
-		};
+	//
+		function gwA(width,height){
+			this.lifeValue=50;
+			gw.call(this,width,height);	
+			this.speed=50;
+			this.money=5;
+		}
+		game.funLib.extend(gw,gwA);
 		gwA.prototype.reUI=function(){
 				var ctx=this.ctx;
 				ctx.save();
@@ -206,16 +213,30 @@ var monsterFactory=(function (){
 		};
 		//gwB
 		function gwB(width,height){
-			gwA.call(this,width,height);	
-			this.speed=50;
+			this.lifeValue=1000;
+			gw.call(this,width,height);	
+			this.speed=70;
 			this.money=10;
-			this.reUI();
 		}
-		game.funLib.extend(gwA,gwB);
-		gwB.prototype.test=function(){
-				
-		};
+		game.funLib.extend(gw,gwB);
 		gwB.prototype.reUI=function(){
+			var os=30;
+			var that=this;
+			this.setImageData("run",{
+				img:game.File.getImage("monkey"),
+				data:[
+					{x:0+os,y:0,width:30,height:60},
+					{x:30+os,y:10,width:30,height:60}
+				]
+			});
+				var ctx=this.ctx;
+				var i=0;
+			this.setFrame("run",function(){
+				i==2?i=0:"";
+				ctx.clearRect(0,0,that.width,that.height);	
+				ctx.drawImage(that.canvasList["run"][i++],0,0,30,30,0,0,30,30);
+			},100);
+			return false;
 				var ctx=this.ctx;
 				ctx.save();
 				ctx.fillStyle="blue";
@@ -274,20 +295,35 @@ var towerFactory=(function(){
 	var layer=path.layer;
 	var sprite=game.SpriteFactory.getSpriteEntity();
 
-		function bul(){
-			sprite.call(this,5,15);
-			this.speed=100;
+		function bul(width,height){
+			sprite.call(this,width,height);
+			this.ready=1;
 		}
 		game.funLib.extend(sprite,bul);
+		bul.prototype.follow=function(obj,that){
+			this.ready=0;
+			this.followTo(obj,function(){
+					obj.injure(20);
+					this.angle=that.angle;
+					this.setCenter(that.centerX,that.centerY);
+					this.ready=1;
+			});
+		}
+		function bul1(){
+			bul.call(this,3,3);
+			this.speed=200;
+		}
+		game.funLib.extend(bul,bul1);
 
 		function bul2(){
-			sprite.call(this,3,3);
+			bul.call(this,5,10);
 			this.speed=100;
 		}
-		game.funLib.extend(sprite,bul2);
+		game.funLib.extend(bul,bul2);
+
+
 		function tower(){
 			sprite.call(this,20,20);
-		
 		};	
 		game.funLib.extend(sprite,tower);
 		//巡视
@@ -295,6 +331,8 @@ var towerFactory=(function(){
 			var monsterList=monsterFactory.monsterList;
 			var getSpace=game.funLib.getSpaceBetweenDoubleCoord;
 			var that=this;
+			var oldHitGoal=null;
+			var isTurn=0;
 			function tour(){
 				for(var i in monsterList){
 					var tempM=monsterList[i];
@@ -314,12 +352,8 @@ var towerFactory=(function(){
 			var that=this;
 			game.Animation.setFrame(this.name+"fire",function(){
 				var hitGoal=that.hitGoal;
-				if(hitGoal){
-					that.bul.followTo(hitGoal,function(){
-							hitGoal.injure(20);
-							this.angle=that.angle;
-							this.setCenter(that.centerX,that.centerY);
-					});
+				if(hitGoal&&that.bul.ready){
+					that.bul.follow(hitGoal,that);
 				};
 			},1000);
 		};
@@ -338,7 +372,7 @@ var towerFactory=(function(){
 			this.hitSpace=100;
 			this.hitGoal=null;
 			this.tour();
-			this.initBul(new bul());
+			this.initBul(new bul1());
 			this.fire();
 		};
 		game.funLib.extend(tower,towerA);
@@ -485,8 +519,6 @@ var towerCreateDiv=(function(){
 				var tB=new towerB(10,10);
 				var ML=new MyLocal(10,10);
 					ML.click(function(){return false;});
-					tA.click(function(cx,cy){
-					});
 					creatLayer.append(bk);
 					creatLayer.append(tA);
 					creatLayer.append(tB);
@@ -516,6 +548,7 @@ var towerCreateDiv=(function(){
 var main=(function(){
 	var _money=50;
 	var _orderForm=[
+		["gwB"],
 		["gwA","gwA","gwA"],
 		["gwB","gwB","gwA"],
 		["gwA","gwB","gwB","gwA"],

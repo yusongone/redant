@@ -19,7 +19,6 @@ var game=window.game||(function(){
 			game.funLib.selectArrayByObj(this.spriteList,obj,function(i){
 				that.spriteList.splice(i,1);	
 			});
-
 		};
 		layer.prototype.append=function(obj){
 			obj.layer=this;
@@ -65,7 +64,7 @@ var game=window.game||(function(){
 			this.ctx=tempCanvas.getContext("2d");
 		};
 		var i=0;
-		function _goCoord(x,y,fun){
+		function _isPassCoord(x,y,fun){
 			var ox=this.offsetX,oy=this.offsetY,px=this.prevX,py=this.prevY;
 			var Vx=(ox-x)*(px-x)<0;
 			var Vy=(oy-y)*(py-y)<0;
@@ -83,7 +82,7 @@ var game=window.game||(function(){
 			var tempWidth=(Sprite.width+this.width)/2;
 			var subWidth=Math.abs(x-this.offsetX)-tempWidth;
 			var subHeight=Math.abs(y-this.offsetY)-tempHeight;
-			if(subWidth<0&&subHeight<0||_goCoord.call(this,x,y)){
+			if(subWidth<0&&subHeight<0||_isPassCoord.call(this,x,y)){
 				var d=fun(Sprite);
 				return d;
 			};
@@ -100,6 +99,21 @@ var game=window.game||(function(){
 					this.offsetY=this.centerY+layerCoordY;
 					this.drawX=this.offsetX-this.width/2;
 					this.drawY=this.offsetY-this.height/2;
+		}
+		//
+		//draw this self temp canvas to Animation's canvas
+		function _drawMyCanvas(animateData){
+			var ctx=animateData.ctx;
+				this.layer?_getOffsetCoord.call(this):"";
+			var oX=this.offsetX,oY=this.offsetY,drawX=this.drawX,drawY=this.drawY;
+				ctx.save();
+				ctx.translate(oX,oY);
+				ctx.rotate(Math.PI*2/360*this.angle);
+				ctx.translate(-oX,-oY);
+				ctx.drawImage(this.spriteCanvas,drawX,drawY,this.width,this.height);
+				ctx.strokeStyle="#999";
+				ctx.strokeRect(drawX,drawY,this.width,this.height);
+				ctx.restore();
 		}
 		/*
 		 *sprite entity;
@@ -128,18 +142,21 @@ var game=window.game||(function(){
 		_sprite.prototype.speak=function(str){
 			console.log(this.name+":"+str);
 		};
+		_sprite.prototype.removeFrame=function(name){
+				delete this.FrameFun[name];
+		};
 		_sprite.prototype.setFrame=function(name,fun,time){
 				fun.startTime=0;//(new Date()).getTime();
 				fun.fpsTime=time||0;
 				fun.surplusTime=0;
 				this.FrameFun[name]=fun;
 		};
-		_sprite.prototype.distroy=function(x,y,fun){
+		_sprite.prototype.distroy=function(){
 			var layer=this.layer;
 			layer.removeSprite(this);
 		};
-		_sprite.prototype.goCoord=function(x,y,fun){
-			return _goCoord.call(this,x,y,fun);
+		_sprite.prototype.isPassCoord=function(x,y,fun){
+			return _isPassCoord.call(this,x,y,fun);
 		};
 		_sprite.prototype.followTo=function(sprite,fun){
 			var that=this;
@@ -158,6 +175,17 @@ var game=window.game||(function(){
 		_sprite.prototype.stop=function(x,y,fun){
 			game.Animation.removeFrame(this.name+"moveTo");
 		};
+		_sprite.prototype.stopTurn=function(speed,bool){
+			delete this.removeFrame("turn");
+		};
+		_sprite.prototype.turn=function(speed,fun){
+			var that=this;
+			this.setFrame("turn",function(){
+				fun?fun():"";
+				that.angle+=speed;
+				that.angle%=360;
+			});
+		};
 		_sprite.prototype.faceTo=function(obj){
 			var that=this;
 			that.angle=game.funLib.getAngle(that.offsetX,that.offsetY,obj.offsetX,obj.offsetY);
@@ -168,7 +196,7 @@ var game=window.game||(function(){
 			game.Animation.setFrame(that.name+"moveTo",function(data){
 				var d=that.nextLocal(data.useTime);
 				that.setCenter(d.x,d.y);
-				that.goCoord(x,y,function(){
+				that.isPassCoord(x,y,function(){
 					that.setCenter(x,y);
 					game.Animation.removeFrame(that.name+"moveTo");
 					fun.call(that);
@@ -208,20 +236,6 @@ var game=window.game||(function(){
 		_sprite.prototype.click=function(fun){
 				this.clickFun.push(fun);
 		};
-		//draw this self temp canvas to Animation's canvas
-		_sprite.prototype.drawMyCanvas=function(animateData){
-			var ctx=animateData.ctx;
-				this.layer?_getOffsetCoord.call(this):"";
-			var oX=this.offsetX,oY=this.offsetY,drawX=this.drawX,drawY=this.drawY;
-				ctx.save();
-				ctx.translate(oX,oY);
-				ctx.rotate(Math.PI*2/360*this.angle);
-				ctx.translate(-oX,-oY);
-				ctx.drawImage(this.spriteCanvas,drawX,drawY,this.width,this.height);
-				ctx.strokeStyle="#999";
-				ctx.strokeRect(drawX,drawY,this.width,this.height);
-				ctx.restore();
-		}
 		//do this Frame function when Animation's Frame;
 		_sprite.prototype.oneFrameFun=function(animateData){
 			var that=this;
@@ -243,7 +257,7 @@ var game=window.game||(function(){
 						fun.surplusTime=useTime-fun.fpsTime+fun.surplusTime-d;
 					}
 				}
-				this.drawMyCanvas(animateData);
+				_drawMyCanvas.call(this,animateData);
 		};
 		_sprite.prototype.addFrameFun=function(name,fun){
 			this.frameFunList[name]=fun;
@@ -321,7 +335,7 @@ var game=window.game||(function(){
 			_parseLayerList(function(_layer){
 				var _childList=_layer.spriteList;
 				var length=_childList.length;
-				if(_layer.hide){return false;}
+				if(_layer.hide){return;}
 				for(var i=0;i<length;i++){
 					_childList[i].oneFrameFun(_AnimateData);
 				};
@@ -487,7 +501,7 @@ var game=window.game||(function(){
 		function _click(evt){
 			var bool=true;		
 			Animation.parseLayerList(function(layer){
-				if(layer.hide){return false;}
+				if(layer.hide){return;}
 				_getChildSprite(layer.spriteList,function(sprite){
 					if(sprite.isInLocal(evt.offsetX,evt.offsetY)){
 						var cf=sprite.clickFun;
@@ -605,7 +619,9 @@ var game=window.game||(function(){
 			},
 			//return img object of game cache;
 			getImage:function(name){
-				return fileJson["img"][name].obj;
+				if(fileJson["img"][name]){
+					return fileJson["img"][name].obj;
+				}
 			},
 			//return sound object of game cache;
 			getSound:function(){
