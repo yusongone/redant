@@ -9,6 +9,8 @@ Layer
 
 
 Sprite
+
+
 	setFrame:
 		参数:
 		1 [name] 函数名称
