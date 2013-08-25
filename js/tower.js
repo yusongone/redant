@@ -322,6 +322,25 @@ var towerFactory=(function(){
 		game.funLib.extend(bul,bul2);
 
 
+
+		function hitScope(size){
+			sprite.call(this,size,size);
+			this.reUI();
+			this.turn(2);
+		}
+		game.funLib.extend(sprite,hitScope);
+		hitScope.prototype.reUI=function(){
+			var ctx=this.ctx;	
+				ctx.strokeStyle="#ddd";
+				ctx.beginPath();
+				ctx.arc(this.width/2,5,5,0,2*Math.PI);
+				ctx.fill();
+				ctx.beginPath();
+				ctx.arc(this.width/2,this.height/2,this.width/2,0,2*Math.PI);
+				ctx.stroke();
+		}
+
+
 		function tower(){
 			sprite.call(this,20,20);
 		};	
@@ -362,6 +381,12 @@ var towerFactory=(function(){
 				_bul.setCenter(this.centerX,this.centerY);
 				layer.append(_bul);
 				this.bul=_bul;
+		};
+		tower.prototype.creatB=function(_bul){
+			var that=this;
+			var scope=new hitScope(this.hitSpace*2);
+				scope.setCenter(that.offsetX,that.offsetY);
+			layer.append(scope);
 		};
 
 
@@ -411,9 +436,10 @@ var towerFactory=(function(){
 		return {
 			getTower:function(x,y,type){
 				var tw=Factory[type];
-				var tA=new tw(x,y);
-					layer.append(tA);
-					tA.click(function(){
+				var tt=new tw(x,y);
+					layer.append(tt);
+					tt.click(function(){
+						tt.creatB();
 						return false;
 					});
 			}	
@@ -435,23 +461,33 @@ var towerCreateDiv=(function(){
 	var creatLayer=game.LayerFactory.createLayer();
 	var sprite=game.SpriteFactory.getSpriteEntity();
 	var _show=0;
+	var towerList=[];
+		function _toggleCheck(bool){
+			for(var i =0,l=towerList.length;i<l;i++){
+				bool?towerList[i].checkMoney():towerList[i].stopCheckMoney();
+			}
+		};
 		function background(width,height){
 			sprite.call(this,width,height);
 			this.reUI();
-		}
+			creatLayer.append(this);
+			this.setCenter(30,-10);
+		};
 		game.funLib.extend(sprite,background);
 		background.prototype.reUI=function(){
 			var ctx=this.ctx;
 				ctx.save();
-				ctx.fillStyle="#ddd";
+				ctx.fillStyle="rgba(30,30,30,0.7)";
 				ctx.fillRect(0,0,this.width,this.height);
 				ctx.stroke();
 				ctx.restore();
-		}
+		};
 
 		function MyLocal(){
 			sprite.call(this);
 			this.reUI();
+			creatLayer.append(this);
+			this.setCenter(30,30);
 		}
 		game.funLib.extend(sprite,MyLocal);
 		MyLocal.prototype.reUI=function(){
@@ -467,35 +503,77 @@ var towerCreateDiv=(function(){
 				ctx.stroke();
 				ctx.restore();
 		}
+
+		//
 		function tower(){
 			sprite.call(this,40,40);
 			this.bindEvent();	
+			this.dis=0;
+			this.checkMoney();
+			creatLayer.append(this);
+			towerList.push(this);
 		};
 		game.funLib.extend(sprite,tower);
 		tower.prototype.bindEvent=function(){
 			var that=this;
 			this.click(function(){
+					if(that.dis){return false;}
 						var cx=creatLayer.coordX;
 						var cy=creatLayer.coordY;
 						towerFactory.getTower(cx+30,cy+30,that.type);
 						towerCreateDiv.toggleTowerDiv();
+						main.spendMoney(that.pay);
 						return false;
 			});
 		};
+		tower.prototype.unDisable=function(){
+			this.dis=0;
+			this.ctx.clearRect(0,0,this.width,this.height);
+			this.reUI();
+		};
+		tower.prototype.disable=function(){
+			if(this.dis){return;}
+			this.dis=1;
+			var ctx=this.ctx;
+			ctx.save();
+			ctx.fillStyle="rgba(50,50,50,0.4)";
+			ctx.fillRect(0,0,this.width,this.height);
+			ctx.restore();
+		};
+		tower.prototype.stopCheckMoney=function(){
+			this.removeFrame("checkMoney");
+			console.log("c");
+		};
+		tower.prototype.checkMoney=function(){
+			console.log("ac");
+			this.setFrame("checkMoney",function(){
+				if(this.pay<main.getMoney()){
+					this.unDisable();
+				}else{
+					this.disable();
+				}
+			});
+		};
+
+
 		function towerA(){
 			tower.call(this);
 			this.pay=10;
 			this.type="towerA"
 			this.reUI();
+			this.setCenter(0,-10);
 		}
 		game.funLib.extend(tower,towerA);
-		tower.prototype.reUI=function(){
+		towerA.prototype.reUI=function(){
 			var ctx=this.ctx;	
 				ctx.save();
-				ctx.fillStyle="red";
+				ctx.fillStyle="yellow";
+				ctx.beginPath();
 				ctx.arc(this.width/2,this.height/2,this.width/2,0,2*Math.PI,false);
+				ctx.closePath();
+				ctx.fill();
+				ctx.fillStyle="red";
 				ctx.fillRect(this.width/2-5,0,10,this.height);
-				ctx.stroke();
 				ctx.restore();
 		}
 		function towerB(){
@@ -503,15 +581,18 @@ var towerCreateDiv=(function(){
 			this.pay=10;
 			this.type="towerB"
 			this.reUI();
+			this.setCenter(45,-10);
 		}
 		game.funLib.extend(tower,towerB);
 		towerB.prototype.reUI=function(){
 			var ctx=this.ctx;	
 				ctx.save();
 				ctx.fillStyle="green";
+				ctx.beginPath();
 				ctx.arc(this.width/2,this.height/2,this.width/2,0,2*Math.PI,false);
-				ctx.fillRect(this.width/2-5,0,10,this.height);
+				ctx.closePath();
 				ctx.stroke();
+				ctx.fillRect(this.width/2-5,0,10,this.height);
 				ctx.restore();
 		}
 				var bk=new background(120,45);
@@ -519,22 +600,16 @@ var towerCreateDiv=(function(){
 				var tB=new towerB(10,10);
 				var ML=new MyLocal(10,10);
 					ML.click(function(){return false;});
-					creatLayer.append(bk);
-					creatLayer.append(tA);
-					creatLayer.append(tB);
-					creatLayer.append(ML);
-					bk.setCenter(30,-10);
-					ML.setCenter(30,30);
-					tA.setCenter(0,-10);
-					tB.setCenter(45,-10);
 					creatLayer.hide=1;
 	return {
 			toggleTowerDiv:function(x,y){
 				if(_show){
 					//creatLayer.clearLayer();
 					creatLayer.hide=1;
+					_toggleCheck(0);
 					_show=0;
 				}else{
+					_toggleCheck(1);
 					_show=1;
 					creatLayer.hide=0;
 					creatLayer.toTop();
@@ -546,7 +621,7 @@ var towerCreateDiv=(function(){
 })();
 
 var main=(function(){
-	var _money=50;
+	var _money=20;
 	var _orderForm=[
 		["gwB"],
 		["gwA","gwA","gwA"],
@@ -563,14 +638,15 @@ var main=(function(){
 
 	return {
 		addMoney:function(value){
-	var moneyDiv=$("#money");	
+		var moneyDiv=$("#money");	
 			_money+=value;
 			moneyDiv.text(_money);
 		},
-		checkMoney:function(){
+		getMoney:function(){
 			return _money;
 		},
 		spendMoney:function(value){
+		var moneyDiv=$("#money");	
 			_money-=value;
 			moneyDiv.text(_money);
 		}
