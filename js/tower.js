@@ -294,6 +294,7 @@ var monsterFactory=(function (){
 var towerFactory=(function(){
 	var layer=path.layer;
 	var sprite=game.SpriteFactory.getSpriteEntity();
+	var towerList=[];
 
 		function bul(width,height){
 			sprite.call(this,width,height);
@@ -343,6 +344,8 @@ var towerFactory=(function(){
 
 		function tower(){
 			sprite.call(this,20,20);
+			this._showScope=0;
+			towerList.push(this);
 		};	
 		game.funLib.extend(sprite,tower);
 		//巡视
@@ -382,11 +385,22 @@ var towerFactory=(function(){
 				layer.append(_bul);
 				this.bul=_bul;
 		};
-		tower.prototype.creatB=function(_bul){
+		tower.prototype.exitScope=function(_bul){
+			this._showScope.distroy();
+			this._showScope=null;
+		};
+		tower.prototype.showScope=function(_bul){
+			if(this._showScope){return;}
 			var that=this;
 			var scope=new hitScope(this.hitSpace*2);
 				scope.setCenter(that.offsetX,that.offsetY);
+			this._showScope=scope;
 			layer.append(scope);
+			eventManage.bindGapClick(function(){
+				that.exitScope();
+				eventManage.unbindGapClick();
+				return false;
+			});
 		};
 
 
@@ -414,7 +428,7 @@ var towerFactory=(function(){
 			tower.call(this,20,20);
 			this.reUI();
 			this.setCenter(x,y);
-			this.hitSpace=100;
+			this.hitSpace=50;
 			this.hitGoal=null;
 			this.tour();
 			this.initBul(new bul2());
@@ -439,26 +453,47 @@ var towerFactory=(function(){
 				var tt=new tw(x,y);
 					layer.append(tt);
 					tt.click(function(){
-						tt.creatB();
+						tt.showScope();
 						return false;
 					});
-			}	
+			},	
+			removeShowScope:function(){
+				for(var i=0,l=towerList.length;i<l;i++){
+					towerList[i].exitScope();
+				}	
+			}
 		}
 })();
 
-var eventMange=(function(){
+var eventManage=(function(){
+	var _gapClick=function(){};
 	game.click(function(x,y){
 		var cx=((x/30)>>0)*30+15;
 		var cy=((y/30)>>0)*30+15;
 		if(path.checkInPath(cx,cy)){
 			return false;
 		};
+		if(_gapClick&&false===_gapClick(_gapClick)){
+			return;
+		};
 		towerCreateDiv.toggleTowerDiv(cx,cy);
+		return false;
 	});	
+	return {
+		unbindGapClick:function(){
+			_gapClick=null;
+		},
+		bindGapClick:function(fun){
+			_gapClick=fun;
+		}
+	}
 })();
 
 var towerCreateDiv=(function(){
 	var creatLayer=game.LayerFactory.createLayer();
+		creatLayer.bindBlur(function(){
+			console.log("dddfff");
+		});
 	var sprite=game.SpriteFactory.getSpriteEntity();
 	var _show=0;
 	var towerList=[];

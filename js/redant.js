@@ -1,11 +1,14 @@
 var game=window.game||(function(){
-	var _layerList=[];
-	var Layer=(function(){
+	var LayerFactory=(function(){
+		var _activeLayer=null;
+		var _layerList=[];
+
 		function layer(){
 			this.spriteList=[];
 			this.coordX=0;
 			this.coordY=0;
 			this.hide=0;
+			this.Blur=null;
 		};
 		layer.prototype.setCoord=function(x,y){
 			this.coordX=x||this.coordX;
@@ -31,6 +34,18 @@ var game=window.game||(function(){
 			_layerList.splice(i,1);
 			_layerList.push(temp);
 		};
+		layer.prototype.select=function(){
+			_activeLayer=this;
+		};
+		layer.prototype.bindBlur=function(fun){
+			this.Blur=fun;
+		};
+		layer.prototype.blur=function(){
+			if(this.Blur){
+				this.Blur();
+			}
+			_activeLayer=null;
+		};
 		layer.prototype.toBottom=function(){
 			var i=game.funLib.selectArrayByObj(_layerList,this);	
 			var temp=_layerList[i];
@@ -38,8 +53,27 @@ var game=window.game||(function(){
 			_layerList.unshift(temp);
 		};
 		return {
+				removeLayer:function(obj){
+					var i=game.funLib.selectArrayByObj(_layerList,obj);	
+					var temp=_layerList[i];
+					_layerList.splice(i,1);
+					_activeLayer===temp?_activeLayer=null:"";
+					temp=null;
+				},
+				setActiveLayer:function(tempLayer){
+					_activeLayer=tempLayer;					   
+				},
+				getActiveLayer:function(tempLayer){
+					return _activeLayer;
+				},
 				getLayerList:function(){
 					return _layerList;
+				},
+				checkBlur:function(tempLayer){
+					if(_activeLayer&&_activeLayer!=tempLayer){
+						_activeLayer.blur();
+					};
+					_activeLayer=tempLayer;
 				},
 				createLayer:function(){
 					var ly=new layer(name);
@@ -504,6 +538,7 @@ var game=window.game||(function(){
 				if(layer.hide){return;}
 				_getChildSprite(layer.spriteList,function(sprite){
 					if(sprite.isInLocal(evt.offsetX,evt.offsetY)){
+						LayerFactory.checkBlur(sprite.layer);	
 						var cf=sprite.clickFun;
 						for(var i=0,l=cf.length;i<l;i++){
 								if(false===cf[i].call(this,evt.offsetX,evt.offsetY)){
@@ -516,6 +551,9 @@ var game=window.game||(function(){
 				//
 			});
 				if(bool){
+					var tempLayer=LayerFactory.getActiveLayer();
+					console.log(tempLayer);
+						tempLayer?tempLayer.blur():"";
 					for(var i =_clickFun.length-1,l=-1;i>l;i--){
 						_clickFun[i](evt.offsetX,evt.offsetY);
 					};
@@ -629,7 +667,7 @@ var game=window.game||(function(){
 		}
 		return {
 			SpriteFactory:_spriteObj,
-			LayerFactory:Layer,
+			LayerFactory:LayerFactory,
 			File:_fileObj,
 			Progress:_progress,
 			Animation:Animation,
