@@ -41,10 +41,10 @@ var game=window.game||(function(){
 			this.Blur=fun;
 		};
 		layer.prototype.blur=function(){
-			if(this.Blur){
-				this.Blur();
-			}
 			_activeLayer=null;
+			if(this.Blur){
+				return this.Blur();
+			}
 		};
 		layer.prototype.toBottom=function(){
 			var i=game.funLib.selectArrayByObj(_layerList,this);	
@@ -70,10 +70,7 @@ var game=window.game||(function(){
 					return _layerList;
 				},
 				checkBlur:function(tempLayer){
-					if(_activeLayer&&_activeLayer!=tempLayer){
-						_activeLayer.blur();
-					};
-					_activeLayer=tempLayer;
+					return _activeLayer===tempLayer
 				},
 				createLayer:function(){
 					var ly=new layer(name);
@@ -356,13 +353,22 @@ var game=window.game||(function(){
 				_overLayerFunList[i](_AnimateData);
 			}
 		};
-		function _parseLayerList(fun){
+		function _parseLayerList(fun,order){
 			var l=_layerList.length;
-			for(var i=0;i<l;i++){
-				var bool=fun(_layerList[i]);
-				if(bool==false){
-					return bool;
-				}
+			if(order===false){
+					for(var i=l-1;i>-1;i--){
+						var bool=fun(_layerList[i]);
+						if(bool==false){
+							return bool;
+						}
+					}
+			}else{
+					for(var i=0;i<l;i++){
+						var bool=fun(_layerList[i]);
+						if(bool==false){
+							return bool;
+						}
+					}
 			}
 		};
 		function _updateSprite(_AnimateData){
@@ -534,11 +540,25 @@ var game=window.game||(function(){
 		};
 		function _click(evt){
 			var bool=true;		
+			var blur=true;
+			var gotActiveLayer=false;
+			var count=0;
 			Animation.parseLayerList(function(layer){
 				if(layer.hide){return;}
 				_getChildSprite(layer.spriteList,function(sprite){
 					if(sprite.isInLocal(evt.offsetX,evt.offsetY)){
-						LayerFactory.checkBlur(sprite.layer);	
+						var activeLayer=LayerFactory.getActiveLayer();
+						console.log("layer",LayerFactory.getActiveLayer(),LayerFactory.checkBlur(sprite.layer),sprite.layer,"yy");
+						if(count==0){
+							if(LayerFactory.checkBlur(sprite.layer)){
+								gotActiveLayer=0;
+							}else{
+								if(activeLayer){
+									blur=activeLayer.blur();
+							}
+						}
+						count++;
+						};	
 						var cf=sprite.clickFun;
 						for(var i=0,l=cf.length;i<l;i++){
 								if(false===cf[i].call(this,evt.offsetX,evt.offsetY)){
@@ -549,11 +569,8 @@ var game=window.game||(function(){
 					};
 				});
 				//
-			});
-				if(bool){
-					var tempLayer=LayerFactory.getActiveLayer();
-					console.log(tempLayer);
-						tempLayer?tempLayer.blur():"";
+			},false);
+				if(bool&&blur){
 					for(var i =_clickFun.length-1,l=-1;i>l;i--){
 						_clickFun[i](evt.offsetX,evt.offsetY);
 					};

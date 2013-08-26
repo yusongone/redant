@@ -127,6 +127,7 @@ var path=(function(){
 })();
 var monsterFactory=(function (){
 	var monsterLayer=path.layer;
+		monsterLayer.name="efe"
 	var sprite=game.SpriteFactory.getSpriteEntity();
 	var _monsterList=[];
 	var Factory={"gwA":gwA,"gwB":gwB};
@@ -386,8 +387,10 @@ var towerFactory=(function(){
 				this.bul=_bul;
 		};
 		tower.prototype.exitScope=function(_bul){
-			this._showScope.distroy();
-			this._showScope=null;
+			if(this._showScope){
+				this._showScope.distroy();
+				this._showScope=null;
+			}
 		};
 		tower.prototype.showScope=function(_bul){
 			if(this._showScope){return;}
@@ -396,11 +399,6 @@ var towerFactory=(function(){
 				scope.setCenter(that.offsetX,that.offsetY);
 			this._showScope=scope;
 			layer.append(scope);
-			eventManage.bindGapClick(function(){
-				that.exitScope();
-				eventManage.unbindGapClick();
-				return false;
-			});
 		};
 
 
@@ -452,8 +450,14 @@ var towerFactory=(function(){
 				var tw=Factory[type];
 				var tt=new tw(x,y);
 					layer.append(tt);
+							layer.bindBlur(function(){
+								tt.exitScope();
+								return false;
+							});
 					tt.click(function(){
+						layer.blur();
 						tt.showScope();
+						game.LayerFactory.setActiveLayer(layer);
 						return false;
 					});
 			},	
@@ -466,17 +470,13 @@ var towerFactory=(function(){
 })();
 
 var eventManage=(function(){
-	var _gapClick=function(){};
 	game.click(function(x,y){
 		var cx=((x/30)>>0)*30+15;
 		var cy=((y/30)>>0)*30+15;
 		if(path.checkInPath(cx,cy)){
 			return false;
 		};
-		if(_gapClick&&false===_gapClick(_gapClick)){
-			return;
-		};
-		towerCreateDiv.toggleTowerDiv(cx,cy);
+		towerCreateDiv.turnOnTowerDiv(cx,cy);
 		return false;
 	});	
 	return {
@@ -492,7 +492,8 @@ var eventManage=(function(){
 var towerCreateDiv=(function(){
 	var creatLayer=game.LayerFactory.createLayer();
 		creatLayer.bindBlur(function(){
-			console.log("dddfff");
+			towerCreateDiv.turnOffTowerDiv();
+			return false;
 		});
 	var sprite=game.SpriteFactory.getSpriteEntity();
 	var _show=0;
@@ -556,7 +557,7 @@ var towerCreateDiv=(function(){
 						var cx=creatLayer.coordX;
 						var cy=creatLayer.coordY;
 						towerFactory.getTower(cx+30,cy+30,that.type);
-						towerCreateDiv.toggleTowerDiv();
+						that.layer.blur();
 						main.spendMoney(that.pay);
 						return false;
 			});
@@ -577,10 +578,8 @@ var towerCreateDiv=(function(){
 		};
 		tower.prototype.stopCheckMoney=function(){
 			this.removeFrame("checkMoney");
-			console.log("c");
 		};
 		tower.prototype.checkMoney=function(){
-			console.log("ac");
 			this.setFrame("checkMoney",function(){
 				if(this.pay<main.getMoney()){
 					this.unDisable();
@@ -637,19 +636,16 @@ var towerCreateDiv=(function(){
 					ML.click(function(){return false;});
 					creatLayer.hide=1;
 	return {
-			toggleTowerDiv:function(x,y){
-				if(_show){
-					//creatLayer.clearLayer();
+			turnOffTowerDiv:function(){
 					creatLayer.hide=1;
 					_toggleCheck(0);
-					_show=0;
-				}else{
+			},
+			turnOnTowerDiv:function(x,y){
 					_toggleCheck(1);
-					_show=1;
+					game.LayerFactory.setActiveLayer(creatLayer);
 					creatLayer.hide=0;
 					creatLayer.toTop();
 					creatLayer.setCoord(x-30,y-30);
-				}
 			}
 	}
 	
@@ -658,7 +654,6 @@ var towerCreateDiv=(function(){
 var main=(function(){
 	var _money=20;
 	var _orderForm=[
-		["gwB"],
 		["gwA","gwA","gwA"],
 		["gwB","gwB","gwA"],
 		["gwA","gwB","gwB","gwA"],
