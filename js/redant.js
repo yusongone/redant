@@ -540,7 +540,6 @@ var game=window.game||(function(){
 		};
 		function _click(evt){
 			var bool=true;		
-			var blur=true;
 			var gotActiveLayer=false;
 			var count=0;
 			Animation.parseLayerList(function(layer){
@@ -550,14 +549,17 @@ var game=window.game||(function(){
 						var activeLayer=LayerFactory.getActiveLayer();
 						console.log("layer",LayerFactory.getActiveLayer(),LayerFactory.checkBlur(sprite.layer),sprite.layer,"yy");
 						if(count==0){
+							count++;
 							if(LayerFactory.checkBlur(sprite.layer)){
 								gotActiveLayer=0;
 							}else{
 								if(activeLayer){
-									blur=activeLayer.blur();
+									bool=activeLayer.blur();
+									if(bool==false){
+										return bool;
+									}
 							}
 						}
-						count++;
 						};	
 						var cf=sprite.clickFun;
 						for(var i=0,l=cf.length;i<l;i++){
@@ -570,7 +572,7 @@ var game=window.game||(function(){
 				});
 				//
 			},false);
-				if(bool&&blur){
+				if(bool){
 					for(var i =_clickFun.length-1,l=-1;i>l;i--){
 						_clickFun[i](evt.offsetX,evt.offsetY);
 					};
