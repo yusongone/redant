@@ -323,7 +323,7 @@ var game=window.game||(function(){
 			_canvas.width=500;
 			_canvas.height=500;
 			_ctx=_canvas.getContext("2d");
-		var _RAF=window.mozRequestAnimationFrame||window.requestAnimationFrame||window.webkitRequestAnimationFrame;
+		var _RAF=window.requestAnimationFrame||window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.oRequestAnimationFrame||window.msRequestAnimationFrame;
 		var _layerList=null;
 		var _overLayerFunList={};
 		var _frameFunList={};
@@ -417,7 +417,6 @@ var game=window.game||(function(){
 			start:function(){
 				game.Progress.pause=0;
 				_layerList=game.LayerFactory.getLayerList();
-				console.log("start");
 				_RAF(_oneFrame);
 				//game.togglePaused();
 				this.start=function(){console.error("game ware running")};
