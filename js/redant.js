@@ -543,10 +543,12 @@ var game=window.game||(function(){
 			var blur=true;
 			var gotActiveLayer=false;
 			var count=0;
+			var offsetX=evt.offsetX||evt.layerX;
+			var offsetY=evt.offsetY||evt.layerY;
 			Animation.parseLayerList(function(layer){
 				if(layer.hide){return;}
 				_getChildSprite(layer.spriteList,function(sprite){
-					if(sprite.isInLocal(evt.offsetX,evt.offsetY)){
+					if(sprite.isInLocal(offsetX,offsetY)){
 						var activeLayer=LayerFactory.getActiveLayer();
 						console.log("layer",LayerFactory.getActiveLayer(),LayerFactory.checkBlur(sprite.layer),sprite.layer,"yy");
 						if(count==0){
@@ -561,7 +563,7 @@ var game=window.game||(function(){
 						};	
 						var cf=sprite.clickFun;
 						for(var i=0,l=cf.length;i<l;i++){
-								if(false===cf[i].call(this,evt.offsetX,evt.offsetY)){
+								if(false===cf[i].call(this,offsetX,offsetY)){
 									bool=false;	
 								};
 						};
@@ -572,7 +574,7 @@ var game=window.game||(function(){
 			},false);
 				if(bool&&blur){
 					for(var i =_clickFun.length-1,l=-1;i>l;i--){
-						_clickFun[i](evt.offsetX,evt.offsetY);
+						_clickFun[i](offsetX,offsetY);
 					};
 				}
 				return bool;
