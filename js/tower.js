@@ -13,7 +13,12 @@ game.File.addFile([
 
 
 function init(){
-		$("#box").click(function(){
+		main.setDiv({
+			moneyDiv:$("#money")
+			,fpsDiv:$("#fps")
+		});
+		$("#begin").click(function(){
+			$("#begin").slideUp("slow");
 			game.Progress.start();	
 		});	
 		game.config({
@@ -21,7 +26,14 @@ function init(){
 			,"canvasHeight":320
 		});
 		game.appendTo(document.getElementById("box"));
-
+		path.init([
+		{x:15.5,y:135.5},
+		{x:165.5,y:135.5},
+		{x:165.5,y:195.5},
+		{x:375.5,y:195.5},
+		{x:375.5,y:75.5},
+		{x:465.5,y:75.5},
+		]);
 		monsterFactory.createSomeMonster(["gwA","gwB","gwA","gwB"]);
 		monsterFactory.layer.toTop();
 		return false;
@@ -29,43 +41,8 @@ function init(){
 var path=(function(){
 	var _layer=game.LayerFactory.createLayer();
 	var sprite=game.SpriteFactory.getSpriteEntity();
-	var _map=[
-		{x:15.5,y:135.5},
-		{x:165.5,y:135.5},
-		{x:165.5,y:195.5},
-		{x:375.5,y:195.5},
-		{x:375.5,y:75.5},
-		{x:465.5,y:75.5},
-		];
-		
-	var layerBackground=game.LayerFactory.createLayer();
-		layerBackground.setCoord(240,160);
-	var sprite=game.SpriteFactory.getSpriteEntity();
-		var back=new sprite(480,320);
-			var ctx=back.ctx;
-			for(var i=1;i<27;i++){
-				ctx.save();
-				ctx.strokeStyle="#ddd";
-				ctx.moveTo(0.5+i*30,0);
-				ctx.lineTo(0.5+i*30,320);
-			}
-			for(var i=1;i<11;i++){
-				ctx.moveTo(0,0.5+i*30);
-				ctx.lineTo(480,0.5+i*30);
-			}
-				ctx.stroke();
-				ctx.restore();
-		layerBackground.append(back);
-		var Path=new sprite(480,320);
-			var ctx=Path.ctx;
-				ctx.lineWidth=30;
-				ctx.strokeStyle="#ddd"
-				ctx.moveTo(_map[0].x,_map[0].y);
-			for(var i=1,l=_map.length;i<l;i++){
-				ctx.lineTo(_map[i].x,_map[i].y);
-			}
-				ctx.stroke();
-		layerBackground.append(Path);
+
+	var _map;
 
 		function _checkInPath(index,x,y){
 			if(!(index<_map.length-1)){
@@ -83,7 +60,6 @@ var path=(function(){
 			}
 		};
 
-		var length=_map.length;
 
 		function Life(width,height){
 			this.life=100;
@@ -104,8 +80,9 @@ var path=(function(){
 		};
 		var jg;
 		function createExit(){
+			var length=_map.length;
 				jg=new sprite(30,30);				
-				jg.turn(3);
+				jg.turn(50);
 				var tempX=_map[length-1].x;
 				var tempY=_map[length-1].y;
 				jg.setCenter(tempX,tempY);
@@ -113,12 +90,38 @@ var path=(function(){
 				jg.life=new Life(20,5);
 				jg.life.setCenter(tempX,tempY-25);
 				_layer.append(jg.life);
+			path.exitObj=jg
 		};
-		createExit();
 	return {
-		exitObj:jg,
 		layer:_layer,
-		map:_map,
+		init:function(map){
+			_map=map;
+			this.map=_map;
+			var canvas=document.getElementById("bj");
+			var ctx=canvas.getContext("2d");
+			for(var i=1;i<27;i++){
+				ctx.save();
+				ctx.strokeStyle="#ddd";
+				ctx.moveTo(0.5+i*30,0);
+				ctx.lineTo(0.5+i*30,320);
+			}
+			for(var i=1;i<11;i++){
+				ctx.moveTo(0,0.5+i*30);
+				ctx.lineTo(480,0.5+i*30);
+			}
+				ctx.restore();
+				ctx.stroke();
+				ctx.lineWidth=30;
+				ctx.strokeStyle="#ddd"
+				ctx.beginPath();
+				ctx.moveTo(_map[0].x,_map[0].y);
+			for(var i=1,l=_map.length;i<l;i++){
+				ctx.lineTo(_map[i].x,_map[i].y);
+			}
+				ctx.stroke();
+			createExit();
+		
+		},
 		checkInPath:function(x,y){
 			var re=_checkInPath(0,x,y);		
 			return re;
@@ -214,7 +217,7 @@ var monsterFactory=(function (){
 		};
 		//gwB
 		function gwB(width,height){
-			this.lifeValue=1000;
+			this.lifeValue=100;
 			gw.call(this,width,height);	
 			this.speed=70;
 			this.money=10;
@@ -328,7 +331,7 @@ var towerFactory=(function(){
 		function hitScope(size){
 			sprite.call(this,size,size);
 			this.reUI();
-			this.turn(2);
+			this.turn(100);
 		}
 		game.funLib.extend(sprite,hitScope);
 		hitScope.prototype.reUI=function(){
@@ -370,6 +373,9 @@ var towerFactory=(function(){
 			};	
 			this.addFrameFun("tour",tour);
 		};
+		tower.prototype.upgrade=function(){
+				this.hitSpace+=30;
+		};
 		//发射
 		tower.prototype.fire=function(){
 			var that=this;
@@ -392,7 +398,7 @@ var towerFactory=(function(){
 				this._showScope=null;
 			}
 		};
-		tower.prototype.showScope=function(_bul){
+		tower.prototype.showScope=function(){
 			if(this._showScope){return;}
 			var that=this;
 			var scope=new hitScope(this.hitSpace*2);
@@ -455,9 +461,10 @@ var towerFactory=(function(){
 								return false;
 							});
 					tt.click(function(){
-						layer.blur();
-						tt.showScope();
-						game.LayerFactory.setActiveLayer(layer);
+						//layer.blur();
+						//tt.showScope();
+						//game.LayerFactory.setActiveLayer(layer);
+						operateTower.showOperate(tt);
 						return false;
 					});
 			},	
@@ -486,6 +493,80 @@ var eventManage=(function(){
 		bindGapClick:function(fun){
 			_gapClick=fun;
 		}
+	}
+})();
+
+var operateTower=(function(){
+	var layer=game.LayerFactory.createLayer();
+		layer.hide=1;
+	var sprite=game.SpriteFactory.getSpriteEntity();
+		function hitScope(size){
+			sprite.call(this,size,size);
+			this.reUI();
+			this.turn(100);
+		}
+		game.funLib.extend(sprite,hitScope);
+		hitScope.prototype.reSetSize=function(w,h){
+				this.angle=0;
+				this.width=w;
+				this.height=h;
+			this.spriteCanvas.width=w;
+			this.spriteCanvas.height=h;
+			this.reUI();
+		};
+		hitScope.prototype.reUI=function(){
+			var ctx=this.ctx;	
+				ctx.strokeStyle="green";
+				ctx.beginPath();
+				ctx.moveTo(this.width/2,0);
+				ctx.lineTo(this.width/2,this.height/2);
+				ctx.closePath();
+				ctx.stroke();
+				ctx.beginPath();
+				ctx.arc(this.width/2,this.height/2,this.width/2,0,2*Math.PI);
+				ctx.stroke();
+		}
+
+		function upgrade(size){
+			sprite.call(this,size,size);
+		}
+		game.funLib.extend(sprite,upgrade);
+
+		function Sale(size){
+			sprite.call(this,size,size);
+		}
+		game.funLib.extend(sprite,Sale);
+
+	var _scope=new hitScope(10);
+	var _up=new upgrade(40);
+		_up.setCenter(-30,-30);
+	var _sale=new Sale(40);
+		_sale.setCenter(20,-30);
+
+		layer.append(_scope);
+		layer.append(_up);
+		layer.append(_sale);
+
+	return {
+			showOperate:function(tower){
+				var x=tower.offsetX;
+				var y=tower.offsetY;
+				var space=tower.hitSpace*2;
+				console.log(x,y,space);
+				layer.setCoord(x,y);
+				_scope.reSetSize(space,space);
+				var that=this;
+				function clickEvent(){
+					tower.upgrade();
+					console.log("up");
+					that.showOperate(tower);
+					_up.removeClick(clickEvent);
+					return false;
+				}
+				_up.click(clickEvent);
+				layer.hide=0;
+			}
+	
 	}
 })();
 
@@ -652,7 +733,9 @@ var towerCreateDiv=(function(){
 })();
 
 var main=(function(){
-	var _money=20;
+	var _money=20,
+		_moneyDiv,
+		_fpsDiv;
 	var _orderForm=[
 		["gwA","gwA","gwA"],
 		["gwB","gwB","gwA"],
@@ -665,20 +748,26 @@ var main=(function(){
 		["gwB","gwB","gwB","gwA","gwA","gwA"]
 	]
 	monsterFactory.setOrderForm(_orderForm);
+//game.Animation.setFrame("showFPS",function(data){main.showFPS(1000/data.useTime);});
 
 	return {
+		setDiv:function(json){
+			_moneyDiv=json.moneyDiv;
+			_fpsDiv=json.fpsDiv;
+		},
+		showFPS:function(no){
+			_fpsDiv.text(no);
+		},
 		addMoney:function(value){
-		var moneyDiv=$("#money");	
 			_money+=value;
-			moneyDiv.text(_money);
+			_moneyDiv.text(_money);
 		},
 		getMoney:function(){
 			return _money;
 		},
 		spendMoney:function(value){
-		var moneyDiv=$("#money");	
 			_money-=value;
-			moneyDiv.text(_money);
+			_moneyDiv.text(_money);
 		}
 	}
 })();

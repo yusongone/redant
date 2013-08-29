@@ -211,9 +211,9 @@ var game=window.game||(function(){
 		};
 		_sprite.prototype.turn=function(speed,fun){
 			var that=this;
-			this.setFrame("turn",function(){
+			this.setFrame("turn",function(data){
 				fun?fun():"";
-				that.angle+=speed;
+				that.angle=that.angle+(speed*data.useTime/1000);
 				that.angle%=360;
 			});
 		};
@@ -263,6 +263,12 @@ var game=window.game||(function(){
 				return true;
 			};
 			return false;
+		};
+		_sprite.prototype.removeClick=function(fun){
+				var that=this;
+			game.funLib.selectArrayByObj(this.clickFun,fun,function(i){
+				that.clickFun.splice(i,1);	
+			});
 		};
 		_sprite.prototype.click=function(fun){
 				this.clickFun.push(fun);
@@ -538,12 +544,10 @@ var game=window.game||(function(){
 				}
 			}
 		};
-		function _click(evt){
+		function _click(offsetX,offsetY){
 			var bool=true;		
 			var gotActiveLayer=false;
 			var count=0;
-			var offsetX=evt.offsetX||evt.layerX;
-			var offsetY=evt.offsetY||evt.layerY;
 			Animation.parseLayerList(function(layer){
 				if(layer.hide){return;}
 				_getChildSprite(layer.spriteList,function(sprite){
@@ -584,7 +588,10 @@ var game=window.game||(function(){
 		function _bindClick(){
 			var _canvas=Animation.getCanvas();
 				_canvas.addEventListener("click",function(evt){
-					_click(evt);	
+					evt.preventDefault();
+					var offsetX=evt.offsetX||evt.layerX;
+					var offsetY=evt.offsetY||evt.layerY;
+					_click(offsetX,offsetY);	
 				},false);
 		};
 		return {
