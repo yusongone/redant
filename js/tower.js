@@ -328,24 +328,6 @@ var towerFactory=(function(){
 
 
 
-		function hitScope(size){
-			sprite.call(this,size,size);
-			this.reUI();
-			this.turn(100);
-		}
-		game.funLib.extend(sprite,hitScope);
-		hitScope.prototype.reUI=function(){
-			var ctx=this.ctx;	
-				ctx.strokeStyle="#ddd";
-				ctx.beginPath();
-				ctx.arc(this.width/2,5,5,0,2*Math.PI);
-				ctx.fill();
-				ctx.beginPath();
-				ctx.arc(this.width/2,this.height/2,this.width/2,0,2*Math.PI);
-				ctx.stroke();
-		}
-
-
 		function tower(){
 			sprite.call(this,20,20);
 			this._showScope=0;
@@ -375,6 +357,8 @@ var towerFactory=(function(){
 		};
 		tower.prototype.upgrade=function(){
 				this.hitSpace+=30;
+				main.spendMoney(this.upgradeMoney);
+
 		};
 		//发射
 		tower.prototype.fire=function(){
@@ -392,25 +376,12 @@ var towerFactory=(function(){
 				layer.append(_bul);
 				this.bul=_bul;
 		};
-		tower.prototype.exitScope=function(_bul){
-			if(this._showScope){
-				this._showScope.distroy();
-				this._showScope=null;
-			}
-		};
-		tower.prototype.showScope=function(){
-			if(this._showScope){return;}
-			var that=this;
-			var scope=new hitScope(this.hitSpace*2);
-				scope.setCenter(that.offsetX,that.offsetY);
-			this._showScope=scope;
-			layer.append(scope);
-		};
-
+	
 
 		function towerA(x,y){
 			tower.call(this,20,20);
 			this.reUI();
+			this.upgradeMoney=10;
 			this.setCenter(x,y);
 			this.hitSpace=100;
 			this.hitGoal=null;
@@ -431,6 +402,7 @@ var towerFactory=(function(){
 		function towerB(x,y){
 			tower.call(this,20,20);
 			this.reUI();
+			this.upgradeMoney=50;
 			this.setCenter(x,y);
 			this.hitSpace=50;
 			this.hitGoal=null;
@@ -456,14 +428,8 @@ var towerFactory=(function(){
 				var tw=Factory[type];
 				var tt=new tw(x,y);
 					layer.append(tt);
-							layer.bindBlur(function(){
-								tt.exitScope();
-								return false;
-							});
 					tt.click(function(){
-						//layer.blur();
-						//tt.showScope();
-						//game.LayerFactory.setActiveLayer(layer);
+						layer.blur();
 						operateTower.showOperate(tt);
 						return false;
 					});
@@ -516,7 +482,7 @@ var operateTower=(function(){
 		};
 		hitScope.prototype.reUI=function(){
 			var ctx=this.ctx;	
-				ctx.strokeStyle="green";
+				ctx.strokeStyle="red";
 				ctx.beginPath();
 				ctx.moveTo(this.width/2,0);
 				ctx.lineTo(this.width/2,this.height/2);
@@ -529,8 +495,25 @@ var operateTower=(function(){
 
 		function upgrade(size){
 			sprite.call(this,size,size);
+			this.clickEnable=1;
 		}
 		game.funLib.extend(sprite,upgrade);
+		upgrade.prototype.stopCheckMoney=function(){
+			this.removeFrame("checkMoney");
+		};
+		upgrade.prototype.checkMoney=function(){
+			var upMoney=this.tower.upgradeMoney;
+			this.setFrame("checkMoney",function(){
+				if(upMoney<main.getMoney()){
+					//this.unDisable();
+					this.clickEnable=1;
+				}else{
+					//this.disable();
+					console.log(this.clickEnable);
+					this.clickEnable=0;
+				}
+			});
+		};
 
 		function Sale(size){
 			sprite.call(this,size,size);
@@ -546,25 +529,31 @@ var operateTower=(function(){
 		layer.append(_scope);
 		layer.append(_up);
 		layer.append(_sale);
+				_up.click(function(){
+					if(!this.clickEnable){return false;};
+					this.tower.upgrade();
+					console.log("up");
+					operateTower.showOperate(this.tower);
+					return false;
+				});
 
 	return {
 			showOperate:function(tower){
 				var x=tower.offsetX;
 				var y=tower.offsetY;
 				var space=tower.hitSpace*2;
-				console.log(x,y,space);
 				layer.setCoord(x,y);
 				_scope.reSetSize(space,space);
 				var that=this;
-				function clickEvent(){
-					tower.upgrade();
-					console.log("up");
-					that.showOperate(tower);
-					_up.removeClick(clickEvent);
-					return false;
-				}
-				_up.click(clickEvent);
+				_up.tower=tower;
+				_up.checkMoney();
+				console.log(tower.name);
+							layer.bindBlur(function(){
+								layer.hide=1;
+								return false;
+							});
 				layer.hide=0;
+				game.LayerFactory.setActiveLayer(layer);
 			}
 	
 	}
@@ -622,7 +611,7 @@ var towerCreateDiv=(function(){
 		}
 
 		//
-		function tower(){
+		function cTower(){
 			sprite.call(this,40,40);
 			this.bindEvent();	
 			this.dis=0;
@@ -630,8 +619,8 @@ var towerCreateDiv=(function(){
 			creatLayer.append(this);
 			towerList.push(this);
 		};
-		game.funLib.extend(sprite,tower);
-		tower.prototype.bindEvent=function(){
+		game.funLib.extend(sprite,cTower);
+		cTower.prototype.bindEvent=function(){
 			var that=this;
 			this.click(function(){
 					if(that.dis){return false;}
@@ -643,12 +632,12 @@ var towerCreateDiv=(function(){
 						return false;
 			});
 		};
-		tower.prototype.unDisable=function(){
+		cTower.prototype.unDisable=function(){
 			this.dis=0;
 			this.ctx.clearRect(0,0,this.width,this.height);
 			this.reUI();
 		};
-		tower.prototype.disable=function(){
+		cTower.prototype.disable=function(){
 			if(this.dis){return;}
 			this.dis=1;
 			var ctx=this.ctx;
@@ -657,10 +646,10 @@ var towerCreateDiv=(function(){
 			ctx.fillRect(0,0,this.width,this.height);
 			ctx.restore();
 		};
-		tower.prototype.stopCheckMoney=function(){
+		cTower.prototype.stopCheckMoney=function(){
 			this.removeFrame("checkMoney");
 		};
-		tower.prototype.checkMoney=function(){
+		cTower.prototype.checkMoney=function(){
 			this.setFrame("checkMoney",function(){
 				if(this.pay<main.getMoney()){
 					this.unDisable();
@@ -671,15 +660,15 @@ var towerCreateDiv=(function(){
 		};
 
 
-		function towerA(){
-			tower.call(this);
+		function cTowerA(){
+			cTower.call(this);
 			this.pay=10;
 			this.type="towerA"
 			this.reUI();
 			this.setCenter(0,-10);
 		}
-		game.funLib.extend(tower,towerA);
-		towerA.prototype.reUI=function(){
+		game.funLib.extend(cTower,cTowerA);
+		cTowerA.prototype.reUI=function(){
 			var ctx=this.ctx;	
 				ctx.save();
 				ctx.fillStyle="yellow";
@@ -691,15 +680,15 @@ var towerCreateDiv=(function(){
 				ctx.fillRect(this.width/2-5,0,10,this.height);
 				ctx.restore();
 		}
-		function towerB(){
-			tower.call(this,40,40);
+		function cTowerB(){
+			cTower.call(this,40,40);
 			this.pay=10;
 			this.type="towerB"
 			this.reUI();
 			this.setCenter(45,-10);
 		}
-		game.funLib.extend(tower,towerB);
-		towerB.prototype.reUI=function(){
+		game.funLib.extend(cTower,cTowerB);
+		cTowerB.prototype.reUI=function(){
 			var ctx=this.ctx;	
 				ctx.save();
 				ctx.fillStyle="green";
@@ -711,8 +700,8 @@ var towerCreateDiv=(function(){
 				ctx.restore();
 		}
 				var bk=new background(120,45);
-				var tA=new towerA(10,10);
-				var tB=new towerB(10,10);
+				var tA=new cTowerA(10,10);
+				var tB=new cTowerB(10,10);
 				var ML=new MyLocal(10,10);
 					ML.click(function(){return false;});
 					creatLayer.hide=1;

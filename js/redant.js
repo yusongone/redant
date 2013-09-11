@@ -264,11 +264,16 @@ var game=window.game||(function(){
 			};
 			return false;
 		};
+		_sprite.prototype.clearClickFunction=function(){
+				this.clickFun.length=0;
+				return this;
+		};
 		_sprite.prototype.removeClick=function(fun){
-				var that=this;
+			var that=this;
 			game.funLib.selectArrayByObj(this.clickFun,fun,function(i){
 				that.clickFun.splice(i,1);	
 			});
+			return this;
 		};
 		_sprite.prototype.click=function(fun){
 				this.clickFun.push(fun);
@@ -548,12 +553,11 @@ var game=window.game||(function(){
 			var bool=true;		
 			var gotActiveLayer=false;
 			var count=0;
+			var activeLayer=LayerFactory.getActiveLayer();
 			Animation.parseLayerList(function(layer){
 				if(layer.hide){return;}
 				_getChildSprite(layer.spriteList,function(sprite){
 					if(sprite.isInLocal(offsetX,offsetY)){
-						var activeLayer=LayerFactory.getActiveLayer();
-						console.log("layer",LayerFactory.getActiveLayer(),LayerFactory.checkBlur(sprite.layer),sprite.layer,"yy");
 						if(count==0){
 							count++;
 							if(LayerFactory.checkBlur(sprite.layer)){
@@ -564,12 +568,12 @@ var game=window.game||(function(){
 									if(bool==false){
 										return bool;
 									}
+								}
 							}
-						}
 						};	
 						var cf=sprite.clickFun;
 						for(var i=0,l=cf.length;i<l;i++){
-								if(false===cf[i].call(this,offsetX,offsetY)){
+								if(false===cf[i].call(sprite,offsetX,offsetY)){
 									bool=false;	
 								};
 						};
@@ -579,6 +583,12 @@ var game=window.game||(function(){
 				//
 			},false);
 				if(bool){
+					if(activeLayer){
+						bool=activeLayer.blur();
+						if(bool==false){
+							return bool;
+						}
+					}
 					for(var i =_clickFun.length-1,l=-1;i>l;i--){
 						_clickFun[i](offsetX,offsetY);
 					};
