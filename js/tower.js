@@ -312,7 +312,7 @@ var towerFactory=(function(){
 					this.angle=that.angle;
 					this.setCenter(that.centerX,that.centerY);
 					this.ready=1;
-			});
+			},true);
 		}
 		function bul1(){
 			bul.call(this,3,3);
@@ -331,6 +331,7 @@ var towerFactory=(function(){
 		function tower(){
 			sprite.call(this,20,20);
 			this._showScope=0;
+			this.level=0;
 			towerList.push(this);
 		};	
 		game.funLib.extend(sprite,tower);
@@ -345,7 +346,7 @@ var towerFactory=(function(){
 				for(var i in monsterList){
 					var tempM=monsterList[i];
 					var space=getSpace(tempM.offsetX,tempM.offsetY,that.offsetX,that.offsetY);	
-					if(space<that.hitSpace){
+					if(!(space>that.hitSpace)){
 						that.hitGoal=tempM;
 						that.faceTo(tempM);
 						return;
@@ -355,9 +356,18 @@ var towerFactory=(function(){
 			};	
 			this.addFrameFun("tour",tour);
 		};
-		tower.prototype.upgrade=function(){
+		tower.prototype.saleSelf=function(){
+				towerFactory.removeTower(this);
+				var money=this.saleMoney[this.level]
+				main.addMoney(money);
+				this.level++;
+
+		};
+		tower.prototype.upgradeSelf=function(){
 				this.hitSpace+=30;
-				main.spendMoney(this.upgradeMoney);
+				var money=this.upgradeMoney[this.level]
+				main.spendMoney(money);
+				this.level++;
 
 		};
 		//发射
@@ -365,7 +375,7 @@ var towerFactory=(function(){
 			var that=this;
 			game.Animation.setFrame(this.name+"fire",function(){
 				var hitGoal=that.hitGoal;
-				if(hitGoal&&that.bul.ready){
+				if(hitGoal&&that.bul&&that.bul.ready){
 					that.bul.follow(hitGoal,that);
 				};
 			},1000);
@@ -381,9 +391,10 @@ var towerFactory=(function(){
 		function towerA(x,y){
 			tower.call(this,20,20);
 			this.reUI();
-			this.upgradeMoney=10;
+			this.upgradeMoney=[20,50];
+			this.saleMoney=[10,20];
 			this.setCenter(x,y);
-			this.hitSpace=100;
+			this.hitSpace=130;
 			this.hitGoal=null;
 			this.tour();
 			this.initBul(new bul1());
@@ -402,9 +413,10 @@ var towerFactory=(function(){
 		function towerB(x,y){
 			tower.call(this,20,20);
 			this.reUI();
-			this.upgradeMoney=50;
+			this.upgradeMoney=[10,20];
+			this.saleMoney=[5,10];
 			this.setCenter(x,y);
-			this.hitSpace=50;
+			this.hitSpace=100;
 			this.hitGoal=null;
 			this.tour();
 			this.initBul(new bul2());
@@ -434,6 +446,13 @@ var towerFactory=(function(){
 						return false;
 					});
 			},	
+			removeTower:function(tower){
+				var i=game.funLib.selectArrayByObj(towerList,this);	
+				tower.distroy();
+				tower.bul.distroy();
+				tower.bul=null;
+				towerList.splice(i,1);
+			},
 			removeShowScope:function(){
 				for(var i=0,l=towerList.length;i<l;i++){
 					towerList[i].exitScope();
@@ -502,14 +521,19 @@ var operateTower=(function(){
 			this.removeFrame("checkMoney");
 		};
 		upgrade.prototype.checkMoney=function(){
-			var upMoney=this.tower.upgradeMoney;
+			var tower=this.tower;
+			var upMoney=tower.upgradeMoney[tower.level];
 			this.setFrame("checkMoney",function(){
-				if(upMoney<main.getMoney()){
-					//this.unDisable();
-					this.clickEnable=1;
+				if(upMoney){
+					if(!(upMoney>main.getMoney())){
+						//this.unDisable();
+						this.clickEnable=1;
+					}else{
+						//this.disable();
+						this.clickEnable=0;
+					}
 				}else{
-					//this.disable();
-					console.log(this.clickEnable);
+					console.log("max level");
 					this.clickEnable=0;
 				}
 			});
@@ -531,9 +555,13 @@ var operateTower=(function(){
 		layer.append(_sale);
 				_up.click(function(){
 					if(!this.clickEnable){return false;};
-					this.tower.upgrade();
-					console.log("up");
+					this.tower.upgradeSelf();
 					operateTower.showOperate(this.tower);
+					return false;
+				});
+				_sale.click(function(){
+					this.tower.saleSelf();
+					layer.blur();
 					return false;
 				});
 
@@ -546,13 +574,15 @@ var operateTower=(function(){
 				_scope.reSetSize(space,space);
 				var that=this;
 				_up.tower=tower;
+				_sale.tower=tower;
 				_up.checkMoney();
-				console.log(tower.name);
 							layer.bindBlur(function(){
 								layer.hide=1;
+								_up.stopCheckMoney();
 								return false;
 							});
 				layer.hide=0;
+				layer.toTop();
 				game.LayerFactory.setActiveLayer(layer);
 			}
 	
@@ -651,7 +681,7 @@ var towerCreateDiv=(function(){
 		};
 		cTower.prototype.checkMoney=function(){
 			this.setFrame("checkMoney",function(){
-				if(this.pay<main.getMoney()){
+				if(!(this.pay>main.getMoney())){
 					this.unDisable();
 				}else{
 					this.disable();
@@ -662,7 +692,7 @@ var towerCreateDiv=(function(){
 
 		function cTowerA(){
 			cTower.call(this);
-			this.pay=10;
+			this.pay=30;
 			this.type="towerA"
 			this.reUI();
 			this.setCenter(0,-10);
@@ -682,7 +712,7 @@ var towerCreateDiv=(function(){
 		}
 		function cTowerB(){
 			cTower.call(this,40,40);
-			this.pay=10;
+			this.pay=20;
 			this.type="towerB"
 			this.reUI();
 			this.setCenter(45,-10);
@@ -722,7 +752,7 @@ var towerCreateDiv=(function(){
 })();
 
 var main=(function(){
-	var _money=20,
+	var _money=50,
 		_moneyDiv,
 		_fpsDiv;
 	var _orderForm=[
