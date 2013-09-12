@@ -163,6 +163,7 @@ var game=window.game||(function(){
 			this.prevY=0;
 			this.speed=0;
 			this.angle=0;
+			this.vectorDir=0;
 			this.frameFunList={};
 			_createTempCanvas.call(this);
 			
@@ -189,11 +190,12 @@ var game=window.game||(function(){
 		_sprite.prototype.isPassCoord=function(x,y,fun){
 			return _isPassCoord.call(this,x,y,fun);
 		};
-		_sprite.prototype.followTo=function(sprite,fun){
+		_sprite.prototype.followTo=function(sprite,fun,bool){
 			var that=this;
 			game.Animation.setFrame(that.name+"followTo",function(data){
 				var x=sprite.offsetX,y=sprite.offsetY;
-			that.angle=game.funLib.getAngle(that.offsetX,that.offsetY,x,y);
+			that.vectorDir=game.funLib.getAngle(that.offsetX,that.offsetY,x,y);
+			bool?that.angle=that.vectorDir:"";
 				var d=that.nextLocal(data.useTime);
 				that.setCenter(d.x,d.y);
 				that.checkHit([sprite],function(){
@@ -221,9 +223,10 @@ var game=window.game||(function(){
 			var that=this;
 			that.angle=game.funLib.getAngle(that.offsetX,that.offsetY,obj.offsetX,obj.offsetY);
 		};
-		_sprite.prototype.moveTo=function(x,y,fun){
+		_sprite.prototype.moveTo=function(x,y,fun,bool){
 			var that=this;
-			that.angle=game.funLib.getAngle(that.offsetX,that.offsetY,x,y);
+			that.vectorDir=game.funLib.getAngle(that.offsetX,that.offsetY,x,y);
+			bool?that.angle=that.vectorDir:"";
 			game.Animation.setFrame(that.name+"moveTo",function(data){
 				var d=that.nextLocal(data.useTime);
 				that.setCenter(d.x,d.y);
@@ -251,7 +254,7 @@ var game=window.game||(function(){
 		};
 		_sprite.prototype.nextLocal=function(usedTime){
 		//	var s=d	
-			var al=Math.PI*2*(this.angle/360);
+			var al=Math.PI*2*(this.vectorDir/360);
 			var x=Math.sin(al)*this.speed*usedTime/1000;
 			var y=-Math.cos(al)*this.speed*usedTime/1000;
 			return {"x":this.centerX+x,"y":this.centerY+y}
@@ -544,6 +547,8 @@ var game=window.game||(function(){
 				if(fun){
 					var bool=fun(tempSprite);
 						if(false===bool){
+							console.log("break");
+							return false;
 							break;
 						}
 				}
@@ -577,9 +582,11 @@ var game=window.game||(function(){
 									bool=false;	
 								};
 						};
+						console.log("bool",bool);
 						return bool;
 					};
 				});
+				return bool;
 				//
 			},false);
 				if(bool){
