@@ -143,7 +143,7 @@ var game=window.game||(function(){
 				ctx.translate(-oX,-oY);
 				ctx.drawImage(this.spriteCanvas,drawX,drawY,this.width,this.height);
 				ctx.strokeStyle="#999";
-				ctx.strokeRect(drawX,drawY,this.width,this.height);
+				//ctx.strokeRect(drawX,drawY,this.width,this.height);
 				ctx.restore();
 		}
 		/*
@@ -391,7 +391,7 @@ var game=window.game||(function(){
 				var length=_childList.length;
 				if(_layer.hide){return;}
 				for(var i=0;i<length;i++){
-					_childList[i].oneFrameFun(_AnimateData);
+					_childList[i]?_childList[i].oneFrameFun(_AnimateData):"";
 				};
 			});
 		};
@@ -676,7 +676,6 @@ var game=window.game||(function(){
 			},
 			//create img by load date save in cache
 			_createImage:function(tempJson){
-                             console.log(tempJson);
 				var img=document.createElement("img");
 					img.src=tempJson.url;
 					img.onload=function(){
@@ -692,7 +691,7 @@ var game=window.game||(function(){
 					};
 			},
 			//go to load
-			load:function(){
+			load:function(fun){
 				var imgJson=fileJson.img,
 					soundJson=fileJson.sound;
 					for(var i=0;i<imgJson.length;i++){
@@ -751,7 +750,7 @@ var game=window.game||(function(){
 
 
 function initWindowEvent(){
-	var z=0;
+	var z=1;
 	window.onblur=function(){
 		if(z){
 			z=0;

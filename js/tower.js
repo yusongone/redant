@@ -1,6 +1,11 @@
 game.File.addFile([
 	{
 		"type":"img"
+		,"name":"bomb"
+		,"url":"/image/bomb.png"
+	},
+	{
+		"type":"img"
 		,"name":"rebot"
 		,"url":"/image/rebot.png"
 	},
@@ -81,6 +86,7 @@ var path=(function(){
 			var ctx=this.ctx;
 			ctx.clearRect(0,0,this.width,this.height);
 			var w=this.life/100*this.width;
+				ctx.fillStyle="rgb(255,"+(255*this.life/100)+",0)";
 			ctx.fillRect(0,0,w,this.height);
 		};
 		var jg;
@@ -133,9 +139,74 @@ var path=(function(){
 		}
 	}
 })();
+var bombFactory=(function(){
+	var layer=game.LayerFactory.createLayer();
+	var sprite=game.SpriteFactory.getSpriteEntity();
+		function bomb(width,height){
+			sprite.call(this,width,height);
+			this.reUI();
+			this.changeImage();
+		};
+		game.funLib.extend(sprite,bomb);
+		bomb.prototype.changeImage=function(num){
+				var i=0;
+				var ctx=this.ctx;
+				var that=this;
+					that.setFrame("run",function(){
+						if(i==18){
+							that.removeFrame("run");
+							that.distroy();
+							return false;	
+						}
+						ctx.clearRect(0,0,that.width,that.height);	
+						ctx.drawImage(that.canvasList["bomb"][i++],0,0,54,54,0,0,54,54);
+					},30);
+		};
+		bomb.prototype.reUI=function(num){
+			var size=54;
+			var osY=0;
+			this.setImageData("bomb",{
+				img:game.File.getImage("bomb"),
+				data:[
+					{x:size*0,y:0+osY,width:size,height:size},
+					{x:size*1,y:0+osY,width:size,height:size},
+					{x:size*2,y:0+osY,width:size,height:size},
+					{x:size*3,y:0+osY,width:size,height:size},
+					{x:size*4,y:0+osY,width:size,height:size},
+					{x:size*5,y:0+osY,width:size,height:size},
+					{x:size*6,y:0+osY,width:size,height:size},
+					{x:size*7,y:0+osY,width:size,height:size},
+					{x:size*8,y:0+osY,width:size,height:size},
+					{x:size*9,y:0+osY,width:size,height:size},
+					{x:size*10,y:0+osY,width:size,height:size},
+					{x:size*11,y:0+osY,width:size,height:size},
+					{x:size*12,y:0+osY,width:size,height:size},
+					{x:size*13,y:0+osY,width:size,height:size},
+					{x:size*14,y:0+osY,width:size,height:size},
+					{x:size*15,y:0+osY,width:size,height:size},
+					{x:size*16,y:0+osY,width:size,height:size},
+					{x:size*17,y:0+osY,width:size,height:size},
+					{x:size*18,y:0+osY,width:size,height:size},
+					{x:size*19,y:0+osY,width:size,height:size}
+				]
+			});
+		};
+
+		return {
+			getABomb:function(x,y){
+			var bo=new bomb(54,54);
+				bo.setCenter(x,y);
+				layer.append(bo);
+			},
+			init:function(){
+			
+			}
+		}
+		
+	
+})();
 var monsterFactory=(function (){
 	var monsterLayer=path.layer;
-		monsterLayer.name="efe"
 	var sprite=game.SpriteFactory.getSpriteEntity();
 	var _monsterList=[];
 	var Factory={"gwA":gwA,"gwB":gwB};
@@ -147,7 +218,7 @@ var monsterFactory=(function (){
 				var ctx=this.ctx;
 				ctx.save();
 				ctx.fillStyle="green";
-				ctx.fillRect(0,0,30,5);
+				ctx.fillRect(0,0,32,5);
 				ctx.restore();
 			this.quantity=1;
 		};
@@ -159,6 +230,7 @@ var monsterFactory=(function (){
 			ctx.fillStyle="green";
 			ctx.clearRect(0,0,this.width,this.height);
 			var w=this.quantity*this.width;
+			ctx.fillStyle="rgb(255,"+(255*this.quantity)+",0)";
 			ctx.fillRect(0,0,w,this.height);
 		};
 
@@ -177,6 +249,7 @@ var monsterFactory=(function (){
 				this.stop();
 				main.addMoney(this.money);
 				_distroyMonster(this);
+
 			};
 		};
 		gw.prototype.goTo=function(){
@@ -192,7 +265,6 @@ var monsterFactory=(function (){
 				});
 				that.mapIndex++;
 			};
-            console.log(this.vectorDir);
             switch(that.vectorDir){
                 case 0:;break;
                 case -270:that.changeImage("left");break;
@@ -205,12 +277,12 @@ var monsterFactory=(function (){
 			var ctx=this.ctx;
 			var i=0;
 				ctx.clearRect(0,0,that.width,that.height);	
-				ctx.drawImage(that.canvasList[action][i++],0,0,30,30,0,0,30,30);
+				ctx.drawImage(that.canvasList[action][i++],0,0,31,31,0,0,31,31);
 			this.setFrame("run",function(){
 				i==4?i=0:"";
 				ctx.clearRect(0,0,that.width,that.height);	
-				ctx.drawImage(that.canvasList[action][i++],0,0,30,30,0,0,30,30);
-			},100);
+				ctx.drawImage(that.canvasList[action][i++],0,0,31,31,0,0,31,31);
+			},80);
         },
 		gw.prototype.createLife=function(){
 			var life=new Life(this.width,5);
@@ -231,34 +303,35 @@ var monsterFactory=(function (){
 		}
 		game.funLib.extend(gw,gwA);
 		gwA.prototype.reUI=function(){
-			var osX=2;
+			var osX=0;
             var osY=128;
+			var size=32;
 			var that=this;
 			this.setImageData("down",{
 				img:game.File.getImage("rebot"),
 				data:[
-					{x:0+osX,y:0+osY,width:30,height:30},
-					{x:30+osX,y:0+osY,width:30,height:30},
-					{x:60+osX,y:0+osY,width:30,height:30},
-					{x:30+osX,y:0+osY,width:30,height:30}
+					{x:size*0,y:0+osY,width:size,height:size},
+					{x:size*1,y:0+osY,width:size,height:size},
+					{x:size*2,y:0+osY,width:size,height:size},
+					{x:size*1,y:0+osY,width:size,height:size}
 				]
 			});
 			this.setImageData("up",{
 				img:game.File.getImage("rebot"),
 				data:[
-					{x:0+osX,y:96+osY,width:30,height:30},
-					{x:30+osX,y:96+osY,width:30,height:30},
-					{x:60+osX,y:96+osY,width:30,height:30},
-					{x:30+osX,y:96+osY,width:30,height:30}
+					{x:size*0,y:96+osY,width:size,height:size},
+					{x:size*1,y:96+osY,width:size,height:size},
+					{x:size*2,y:96+osY,width:size,height:size},
+					{x:size*1,y:96+osY,width:size,height:size}
 				]
 			});
 			this.setImageData("left",{
 				img:game.File.getImage("rebot"),
 				data:[
-					{x:0+osX,y:64+osY,width:30,height:30},
-					{x:30+osX,y:64+osY,width:30,height:30},
-					{x:60+osX,y:64+osY,width:30,height:30},
-					{x:30+osX,y:64+osY,width:30,height:30}
+					{x:size*0,y:64+osY,width:size,height:size},
+					{x:size*1,y:64+osY,width:size,height:size},
+					{x:size*2,y:64+osY,width:size,height:size},
+					{x:size*1,y:64+osY,width:size,height:size}
 				]
 			});
             this.changeImage("left");
@@ -273,33 +346,34 @@ var monsterFactory=(function (){
 		}
 		game.funLib.extend(gw,gwB);
 		gwB.prototype.reUI=function(){
-			var os=2;
+			var os=0;
 			var that=this;
+			var size=32;
 			this.setImageData("down",{
 				img:game.File.getImage("rebot"),
 				data:[
-					{x:0+os,y:0,width:30,height:30},
-					{x:30+os,y:0,width:30,height:30},
-					{x:60+os,y:0,width:30,height:30},
-					{x:30+os,y:0,width:30,height:30}
+					{x:size*0,y:0,width:size,height:size},
+					{x:size*1,y:0,width:size,height:size},
+					{x:size*2,y:0,width:size,height:size},
+					{x:size*1,y:0,width:size,height:size}
 				]
 			});
 			this.setImageData("up",{
 				img:game.File.getImage("rebot"),
 				data:[
-					{x:0+os,y:96,width:30,height:30},
-					{x:30+os,y:96,width:30,height:30},
-					{x:60+os,y:96,width:30,height:30},
-					{x:30+os,y:96,width:30,height:30}
+					{x:size*0,y:96,width:size,height:size},
+					{x:size*1,y:96,width:size,height:size},
+					{x:size*2,y:96,width:size,height:size},
+					{x:size*1,y:96,width:size,height:size}
 				]
 			});
 			this.setImageData("left",{
 				img:game.File.getImage("rebot"),
 				data:[
-					{x:0+os,y:64,width:30,height:30},
-					{x:30+os,y:64,width:30,height:30},
-					{x:60+os,y:64,width:30,height:30},
-					{x:30+os,y:64,width:30,height:30}
+					{x:size*0,y:64,width:size,height:size},
+					{x:size*1,y:64,width:size,height:size},
+					{x:size*2,y:64,width:size,height:size},
+					{x:size*1,y:64,width:size,height:size}
 				]
 			});
             this.changeImage("left");
@@ -313,6 +387,7 @@ var monsterFactory=(function (){
 				_monsterList.splice(index,1);	
 				obj.distroy();
 				obj.life.distroy();
+				bombFactory.getABomb(obj.offsetX,obj.offsetY-20);
 			});
 		};
 
@@ -333,7 +408,7 @@ var monsterFactory=(function (){
 			game.Animation.setFrame("createMonster",function(){
 				if(i==length){game.Animation.removeFrame("createMonster");_checkNoMonster();return false;};
 				var GA=Factory[Ary[i]];
-				var gw=new GA(30,30);
+				var gw=new GA(32,32);
 				_monsterList.push(gw);
 				gw.setCenter(map[0].x,map[0].y);
 				gw.goTo();
@@ -359,6 +434,8 @@ var towerFactory=(function(){
 
 		function bul(width,height){
 			sprite.call(this,width,height);
+			var ctx=this.ctx;
+				ctx.fillRect(0,0,this.width,this.height);
 			this.ready=1;
 		}
 		game.funLib.extend(sprite,bul);
@@ -571,6 +648,9 @@ var operateTower=(function(){
 
 		function upgrade(size){
 			sprite.call(this,size,size);
+			var ctx=this.ctx;
+				ctx.fillText("this",0,0,20,20);
+				ctx.fill();
 			this.clickEnable=1;
 		}
 		game.funLib.extend(sprite,upgrade);
