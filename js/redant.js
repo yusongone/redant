@@ -650,8 +650,8 @@ var game=window.game||(function(){
 				this.start=function(){};
 			},
 			//toggle pause ; turn on or turn off;
-			togglePaused:function(){
-				if(this.pause){
+			togglePaused:function(statu){
+				if(statu){
 					this.pause=0;
 					var now=(new Date()).getTime();
 						_pauseUsedTime=(now-_pauseTime);
@@ -744,15 +744,19 @@ var game=window.game||(function(){
 })();
 
 
-function inita(){
+function initWindowEvent(){
 	var z=0;
 	window.onblur=function(){
-		//game.togglePaused();
+		if(z){
+			z=0;
+		game.Progress.togglePaused(0);
+		}
 	}
 	window.onfocus=function(){
-	//	game.togglePaused();
-		z++;
-
+		if(!z){
+			z=1;
+		game.Progress.togglePaused(1);
+		}
 	}
 	document.addEventListener("keyup",function(evt){
 		if(evt.keyCode==13){
@@ -760,3 +764,4 @@ function inita(){
 		};
 	},false);
 }
+initWindowEvent();
