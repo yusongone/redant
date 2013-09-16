@@ -547,7 +547,6 @@ var game=window.game||(function(){
 				if(fun){
 					var bool=fun(tempSprite);
 						if(false===bool){
-							console.log("break");
 							return false;
 							break;
 						}
@@ -582,7 +581,6 @@ var game=window.game||(function(){
 									bool=false;	
 								};
 						};
-						console.log("bool",bool);
 						return bool;
 					};
 				});
@@ -669,12 +667,16 @@ var game=window.game||(function(){
 					var tempObj=Ary[i];
 					var tempName={};
 						tempName[tempObj.name]=tempObj;
-					fileJson[tempObj.type]=tempName;
+					if(!fileJson[tempObj.type]){
+                        fileJson[tempObj.type]=[];
+                    };
+                    fileJson[tempObj.type].push(tempObj);
 				};
 				return this;
 			},
 			//create img by load date save in cache
 			_createImage:function(tempJson){
+                             console.log(tempJson);
 				var img=document.createElement("img");
 					img.src=tempJson.url;
 					img.onload=function(){
@@ -693,17 +695,21 @@ var game=window.game||(function(){
 			load:function(){
 				var imgJson=fileJson.img,
 					soundJson=fileJson.sound;
-					for(var i in imgJson){
+					for(var i=0;i<imgJson.length;i++){
 						this._createImage(imgJson[i]);	
 					}
-					for(var i in soundJson){
+					for(var i=0;i<soundJson.length;i++){
 						this._createSound(soundJson[i]);
 					}
 			},
 			//return img object of game cache;
 			getImage:function(name){
-				if(fileJson["img"][name]){
-					return fileJson["img"][name].obj;
+				if(fileJson["img"]){
+                    for(var i=0;i<fileJson["img"].length;i++){
+                        if(fileJson["img"][i].name==name){
+					        return fileJson["img"][i].obj;
+                        }
+                    }
 				}
 			},
 			//return sound object of game cache;
