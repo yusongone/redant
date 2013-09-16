@@ -143,7 +143,7 @@ var game=window.game||(function(){
 				ctx.translate(-oX,-oY);
 				ctx.drawImage(this.spriteCanvas,drawX,drawY,this.width,this.height);
 				ctx.strokeStyle="#999";
-				ctx.strokeRect(drawX,drawY,this.width,this.height);
+				//ctx.strokeRect(drawX,drawY,this.width,this.height);
 				ctx.restore();
 		}
 		/*
@@ -391,7 +391,7 @@ var game=window.game||(function(){
 				var length=_childList.length;
 				if(_layer.hide){return;}
 				for(var i=0;i<length;i++){
-					_childList[i].oneFrameFun(_AnimateData);
+					_childList[i]?_childList[i].oneFrameFun(_AnimateData):"";
 				};
 			});
 		};
@@ -647,8 +647,8 @@ var game=window.game||(function(){
 				this.start=function(){};
 			},
 			//toggle pause ; turn on or turn off;
-			togglePaused:function(){
-				if(this.pause){
+			togglePaused:function(statu){
+				if(statu){
 					this.pause=0;
 					var now=(new Date()).getTime();
 						_pauseUsedTime=(now-_pauseTime);
@@ -675,7 +675,6 @@ var game=window.game||(function(){
 			},
 			//create img by load date save in cache
 			_createImage:function(tempJson){
-                             console.log(tempJson);
 				var img=document.createElement("img");
 					img.src=tempJson.url;
 					img.onload=function(){
@@ -691,7 +690,7 @@ var game=window.game||(function(){
 					};
 			},
 			//go to load
-			load:function(){
+			load:function(fun){
 				var imgJson=fileJson.img,
 					soundJson=fileJson.sound;
 					for(var i=0;i<imgJson.length;i++){
@@ -749,15 +748,19 @@ var game=window.game||(function(){
 })();
 
 
-function inita(){
-	var z=0;
+function initWindowEvent(){
+	var z=1;
 	window.onblur=function(){
-		//game.togglePaused();
+		if(z){
+			z=0;
+		game.Progress.togglePaused(0);
+		}
 	}
 	window.onfocus=function(){
-	//	game.togglePaused();
-		z++;
-
+		if(!z){
+			z=1;
+		game.Progress.togglePaused(1);
+		}
 	}
 	document.addEventListener("keyup",function(evt){
 		if(evt.keyCode==13){
@@ -765,3 +768,4 @@ function inita(){
 		};
 	},false);
 }
+initWindowEvent();
