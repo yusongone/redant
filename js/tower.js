@@ -814,14 +814,14 @@ var main=(function(){
 		_fpsDiv;
 	var _orderForm=[
 		["gwB","gwA","gwA"],
-		["gwB","gwB","gwA"],
-		["gwA","gwB","gwB","gwA"],
-		["gwB","gwB","gwB","gwA","gwA","gwA"],
-		["gwB","gwB","gwB","gwA","gwA","gwA"],
-		["gwB","gwB","gwB","gwA","gwA","gwA"],
-		["gwB","gwB","gwB","gwA","gwA","gwA"],
-		["gwB","gwB","gwB","gwA","gwA","gwA"],
-		["gwB","gwB","gwB","gwA","gwA","gwA"]
+		["gwB","gwB","gwB","gwA"],
+		["gwB","gwA","gwB","gwB","gwA"],
+		["gwB","gwB","gwB","gwA","gwB","gwA","gwA"],
+		["gwB","gwA","gwB","gwB","gwA","gwA","gwB","gwA"],
+		["gwB","gwA","gwB","gwA","gwA","gwB","gwA","gwA","gwA"],
+		["gwB","gwB","gwA","gwB","gwA","gwB","gwB","gwA","gwA"],
+		["gwB","gwB","gwA","gwB","gwA","gwB","gwB","gwA","gwA"],
+		["gwB","gwB","gwA","gwB","gwA","gwB","gwB","gwA","gwA"],
 	]
 	monsterFactory.setOrderForm(_orderForm);
 //game.Animation.setFrame("showFPS",function(data){main.showFPS(1000/data.useTime);});
