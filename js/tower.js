@@ -200,6 +200,18 @@ var monsterFactory=(function (){
                 case -360:that.changeImage("up");break;
             }
 		};
+		gw.prototype.changeImage=function(action){
+            var that=this;
+			var ctx=this.ctx;
+			var i=0;
+				ctx.clearRect(0,0,that.width,that.height);	
+				ctx.drawImage(that.canvasList[action][i++],0,0,30,30,0,0,30,30);
+			this.setFrame("run",function(){
+				i==4?i=0:"";
+				ctx.clearRect(0,0,that.width,that.height);	
+				ctx.drawImage(that.canvasList[action][i++],0,0,30,30,0,0,30,30);
+			},100);
+        },
 		gw.prototype.createLife=function(){
 			var life=new Life(this.width,5);
 				life.value=this.lifeValue;
@@ -219,46 +231,38 @@ var monsterFactory=(function (){
 		}
 		game.funLib.extend(gw,gwA);
 		gwA.prototype.reUI=function(){
-			var os=2;
+			var osX=2;
+            var osY=128;
 			var that=this;
 			this.setImageData("down",{
 				img:game.File.getImage("rebot"),
 				data:[
-					{x:0+os,y:0,width:30,height:30},
-					{x:30+os,y:0,width:30,height:30},
-					{x:60+os,y:0,width:30,height:30},
-					{x:30+os,y:0,width:30,height:30}
+					{x:0+osX,y:0+osY,width:30,height:30},
+					{x:30+osX,y:0+osY,width:30,height:30},
+					{x:60+osX,y:0+osY,width:30,height:30},
+					{x:30+osX,y:0+osY,width:30,height:30}
 				]
 			});
 			this.setImageData("up",{
 				img:game.File.getImage("rebot"),
 				data:[
-					{x:0+os,y:96,width:30,height:30},
-					{x:30+os,y:96,width:30,height:30},
-					{x:60+os,y:96,width:30,height:30},
-					{x:30+os,y:96,width:30,height:30}
+					{x:0+osX,y:96+osY,width:30,height:30},
+					{x:30+osX,y:96+osY,width:30,height:30},
+					{x:60+osX,y:96+osY,width:30,height:30},
+					{x:30+osX,y:96+osY,width:30,height:30}
 				]
 			});
 			this.setImageData("left",{
 				img:game.File.getImage("rebot"),
 				data:[
-					{x:0+os,y:64,width:30,height:30},
-					{x:30+os,y:64,width:30,height:30},
-					{x:60+os,y:64,width:30,height:30},
-					{x:30+os,y:64,width:30,height:30}
+					{x:0+osX,y:64+osY,width:30,height:30},
+					{x:30+osX,y:64+osY,width:30,height:30},
+					{x:60+osX,y:64+osY,width:30,height:30},
+					{x:30+osX,y:64+osY,width:30,height:30}
 				]
 			});
             this.changeImage("left");
 			return false;
-		};
-		gwA.prototype.reUI=function(){
-				var ctx=this.ctx;
-				ctx.save();
-				ctx.fillStyle="#eee";
-				ctx.fillRect(0,0,this.width,this.height);
-				ctx.strokeStyle="red";
-				ctx.strokeRect(this.width/2,0,2,2);
-				ctx.restore();
 		};
 		//gwB
 		function gwB(width,height){
@@ -268,19 +272,6 @@ var monsterFactory=(function (){
 			this.money=10;
 		}
 		game.funLib.extend(gw,gwB);
-		gwB.prototype.changeImage=function(action){
-            console.log(action);
-            var that=this;
-			var ctx=this.ctx;
-			var i=0;
-				ctx.clearRect(0,0,that.width,that.height);	
-				ctx.drawImage(that.canvasList[action][i++],0,0,30,30,0,0,30,30);
-			this.setFrame("run",function(){
-				i==4?i=0:"";
-				ctx.clearRect(0,0,that.width,that.height);	
-				ctx.drawImage(that.canvasList[action][i++],0,0,30,30,0,0,30,30);
-			},100);
-        },
 		gwB.prototype.reUI=function(){
 			var os=2;
 			var that=this;
@@ -822,7 +813,6 @@ var main=(function(){
 		_moneyDiv,
 		_fpsDiv;
 	var _orderForm=[
-		["gwB"],
 		["gwB","gwA","gwA"],
 		["gwB","gwB","gwA"],
 		["gwA","gwB","gwB","gwA"],
