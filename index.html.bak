@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>abf</title>
+		<style>
+			*{margin:0;padding:0;list-style:none;}
+			#layOut{
+				border:1px solid #ddd;
+				width:480px;
+				height:320px;
+				position:absolute;
+				top:50%;
+				left:50%;
+				margin-left:-240px;
+				margin-top:-160px;
+			}
+			.relative{position:relative;}
+			#box{
+				
+			}
+			#box canvas{
+				position:absolute;
+				top:0;
+				left:0;
+			}
+			#topBar{
+				position:absolute;
+				top:0px;
+				left:50%;
+				width:320px;
+				height:50px;
+				margin-left:-160px;
+				background:rgba(70,70,70,0.4);
+				border-bottom-left-radius:10px;
+				border-bottom-right-radius:10px;
+			}
+			#begin{
+				position:absolute;
+				top:0px;
+				left:0px;
+				line-height:320px;
+				width:100%;
+				text-align:center;
+				background:#ddd;
+			}
+		</style>
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0, maximum-scale=1">
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<script src="/js/jquery.js"></script>
+		<script src="/js/redant.js"></script>
+		<script src="/js/tower.js"></script>
+		<script>
+		</script>
+	</head>
+	<body onload="init()">
+			<div id="layOut">
+				<div class="relative">
+					<div id="box">
+						<canvas width="480" height="320" id="bj">sorry! your browser...</canvas>
+					</div>
+					<div id="topBar">
+						<ul>
+							<li id="money">50</li>
+							<li id="fps"></li>
+						</ul>
+					</div>
+					<h2 id="begin" >点击开始游戏</h2>
+				</div>
+			</div>
+			<div id="test">
+			</div>
+	</body>
+</html>

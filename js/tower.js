@@ -16,7 +16,8 @@ game.File.addFile([
 	},
 	{
 		"type":"sound"
-		,"url":"/sound/sound.mp3"
+        ,"name":"bomb1"
+		,"url":"/sound/bomb1.wav"
 	}
 ]).load();
 
@@ -388,6 +389,7 @@ var monsterFactory=(function (){
 				obj.distroy();
 				obj.life.distroy();
 				bombFactory.getABomb(obj.offsetX,obj.offsetY-20);
+                game.File.getSound("bomb1").play();
 			});
 		};
 

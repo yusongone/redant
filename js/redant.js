@@ -684,9 +684,11 @@ var game=window.game||(function(){
 			},
 			//create sound by load date save in cache
 			_createSound:function(tempJson){
-				var img=document.createElement("img");
-					img.src=tempJson.url;
-					img.onload=function(){
+                        console.log("audio",tempJson.url);
+				var audio=document.createElement("audio");
+					audio.src=tempJson.url;
+                    tempJson.obj=audio;
+					audio.onload=function(){
 						tempJson.obj=img;
 					};
 			},
@@ -703,16 +705,25 @@ var game=window.game||(function(){
 			},
 			//return img object of game cache;
 			getImage:function(name){
-				if(fileJson["img"]){
-                    for(var i=0;i<fileJson["img"].length;i++){
-                        if(fileJson["img"][i].name==name){
-					        return fileJson["img"][i].obj;
+                var imgAry=fileJson["img"];
+				if(imgAry){
+                    for(var i=0;i<imgAry.length;i++){
+                        if(imgAry[i].name==name){
+					        return imgAry[i].obj;
                         }
                     }
 				}
 			},
 			//return sound object of game cache;
-			getSound:function(){
+			getSound:function(name){
+                var sd=fileJson["sound"];
+				if(sd){
+                    for(var i=0;i<sd.length;i++){
+                        if(sd[i].name==name){
+					        return sd[i].obj;
+                        }
+                    }
+				}
 			}
 		}
 		return {
