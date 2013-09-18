@@ -23,9 +23,9 @@ function init(){
 
                 var gainNode=context.createGainNode();
                     gainNode.connect(context.destination);
-                        gainNode.gain.value=0.5;
-                        gainNode.gain.linearRampToValueAtTime(0.5,3);
-                        gainNode.gain.linearRampToValueAtTime(0,4);
+                        gainNode.gain.value=0.8;
+                        //gainNode.gain.linearRampToValueAtTime(0.5,3);
+                        //gainNode.gain.linearRampToValueAtTime(0,4);
                         /*
                     setInterval(function(){
                         gainNode.gain.value+=0.01;
@@ -33,13 +33,14 @@ function init(){
                     console.dir(gainNode);
                     */
 
-                    
+                   function cre(){
+						console.log("d");
+				   
+				   } 
 
-                var source=context.createBufferSource();
-                    source.buffer=buffer;
-                    source.connect(gainNode);
-                    source.loop=1;
-                    source.noteOn(1);
+                    setInterval(function(){
+							cre();
+                    },3000);
 
 
 

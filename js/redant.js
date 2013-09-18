@@ -165,6 +165,7 @@ var game=window.game||(function(){
 			this.angle=0;
 			this.vectorDir=0;
 			this.frameFunList={};
+			this.soundBuffer={};
 			_createTempCanvas.call(this);
 			
 		};	
@@ -176,6 +177,18 @@ var game=window.game||(function(){
 		};
 		_sprite.prototype.removeFrame=function(name){
 				delete this.FrameFun[name];
+		};
+		_sprite.prototype.playAudio=function(name){
+				var context=game.AudioContext;
+                var source=context.createBufferSource();
+                    source.connect(context.destination);
+                    	source.buffer=this.soundBuffer[name];
+                   		source.start(0);
+		};
+		_sprite.prototype.setAudio=function(name,soundBuffer){
+				this.soundBuffer[name]=soundBuffer;
+
+
 		};
 		_sprite.prototype.setFrame=function(name,fun,time){
 				fun.startTime=0;//(new Date()).getTime();
@@ -684,13 +697,15 @@ var game=window.game||(function(){
 			},
 			//create sound by load date save in cache
 			_createSound:function(tempJson){
-                        console.log("audio",tempJson.url);
-				var audio=document.createElement("audio");
-					audio.src=tempJson.url;
-                    tempJson.obj=audio;
-					audio.onload=function(){
-						tempJson.obj=img;
-					};
+					var request=new XMLHttpRequest();
+        				request.open("GET",tempJson.url,true);
+        				request.responseType = 'arraybuffer';
+       				 	request.onload=function(buffer){
+            				game.AudioContext.decodeAudioData(request.response, function(buffer) {
+								tempJson.obj=buffer;
+							});
+						};
+						request.send();
 			},
 			//go to load
 			load:function(fun){
@@ -715,7 +730,7 @@ var game=window.game||(function(){
 				}
 			},
 			//return sound object of game cache;
-			getSound:function(name){
+			getSoundBuffer:function(name){
                 var sd=fileJson["sound"];
 				if(sd){
                     for(var i=0;i<sd.length;i++){
@@ -726,6 +741,10 @@ var game=window.game||(function(){
 				}
 			}
 		}
+		var _audioContext=(function(){
+			var ac=webkitAudioContext;
+			return new ac();
+		})();
 		return {
 			SpriteFactory:_spriteObj,
 			LayerFactory:LayerFactory,
@@ -733,6 +752,7 @@ var game=window.game||(function(){
 			Progress:_progress,
 			Animation:Animation,
 			funLib:_funLib,
+			AudioContext:_audioContext,
 			speak:function(str){
 				document.getElementById("test").innerText=str;
 			},
