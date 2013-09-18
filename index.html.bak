@@ -8,14 +8,13 @@
 			#layOut{
 				border:1px solid #ddd;
 				width:480px;
-				height:340px;
+				height:320px;
 				position:absolute;
 				top:50%;
 				left:50%;
 				margin-left:-240px;
 				margin-top:-160px;
 			}
-			#layOut a{text-align: center; width: 100%; display: block; margin-top: 322px;}
 			.relative{position:relative;}
 			#box{
 				
@@ -68,7 +67,6 @@
 					</div>
 					<h2 id="begin" >点击开始游戏</h2>
 				</div>
-				<a href="http://github.com/yusongone/redant">http://github.com/yusongone/redant</a>
 			</div>
 			<div id="test">
 			</div>

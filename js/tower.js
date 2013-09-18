@@ -16,7 +16,28 @@ game.File.addFile([
 	},
 	{
 		"type":"sound"
-		,"url":"/sound/sound.mp3"
+        ,"name":"bomb1"
+		,"url":"/sound/bomb2.wav"
+	},
+	{
+		"type":"sound"
+        ,"name":"rebot"
+		,"url":"/sound/dragon.wav"
+	},
+	{
+		"type":"sound"
+        ,"name":"injure"
+		,"url":"/sound/injured2.wav"
+	},
+	{
+		"type":"sound"
+        ,"name":"fire"
+		,"url":"/sound/fire.wav"
+	},
+	{
+		"type":"sound"
+        ,"name":"fire2"
+		,"url":"/sound/fire2.wav"
 	}
 ]).load();
 
@@ -196,6 +217,9 @@ var bombFactory=(function(){
 			getABomb:function(x,y){
 			var bo=new bomb(54,54);
 				bo.setCenter(x,y);
+                var buffer=game.File.getSoundBuffer("bomb1");
+				bo.setAudio("play",buffer);
+				bo.playAudio("play");
 				layer.append(bo);
 			},
 			init:function(){
@@ -241,6 +265,9 @@ var monsterFactory=(function (){
 			monsterLayer.append(this);
 			this.createLife();
 			this.reUI();
+			this.setAudio("injure",game.File.getSoundBuffer("injure"));
+			this.setAudio("create",game.File.getSoundBuffer("rebot"));
+			this.playAudio("create");
 		}
 		game.funLib.extend(sprite,gw);
 		gw.prototype.injure=function(num){
@@ -249,8 +276,9 @@ var monsterFactory=(function (){
 				this.stop();
 				main.addMoney(this.money);
 				_distroyMonster(this);
-
-			};
+			}else{
+				this.playAudio("injure");
+			}
 		};
 		gw.prototype.goTo=function(){
 			var that=this;
@@ -511,6 +539,7 @@ var towerFactory=(function(){
 				var hitGoal=that.hitGoal;
 				if(hitGoal&&that.bul&&that.bul.ready){
 					that.bul.follow(hitGoal,that);
+					that.playAudio("fire");
 				};
 			},1000);
 		};
@@ -532,6 +561,7 @@ var towerFactory=(function(){
 			this.hitGoal=null;
 			this.tour();
 			this.initBul(new bul1());
+			this.setAudio("fire",game.File.getSoundBuffer("fire"));
 			this.fire();
 		};
 		game.funLib.extend(tower,towerA);
@@ -554,6 +584,7 @@ var towerFactory=(function(){
 			this.hitGoal=null;
 			this.tour();
 			this.initBul(new bul2());
+			this.setAudio("fire",game.File.getSoundBuffer("fire2"));
 			this.fire();
 		};
 		game.funLib.extend(tower,towerB);
