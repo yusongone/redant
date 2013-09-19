@@ -183,12 +183,11 @@ var game=window.game||(function(){
                 var source=context.createBufferSource();
                     source.connect(context.destination);
                     	source.buffer=this.soundBuffer[name];
-                   		source.start(0);
+                //   		source.start(0);
+                        source.noteOn(1);
 		};
 		_sprite.prototype.setAudio=function(name,soundBuffer){
 				this.soundBuffer[name]=soundBuffer;
-
-
 		};
 		_sprite.prototype.setFrame=function(name,fun,time){
 				fun.startTime=0;//(new Date()).getTime();
