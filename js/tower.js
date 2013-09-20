@@ -254,7 +254,7 @@ var monsterFactory=(function (){
 			ctx.fillStyle="green";
 			ctx.clearRect(0,0,this.width,this.height);
 			var w=this.quantity*this.width;
-			ctx.fillStyle="rgb(255,"+(255*this.quantity)+",0)";
+			ctx.fillStyle="rgb(255,"+(parseInt(255*this.quantity))+",0)";
 			ctx.fillRect(0,0,w,this.height);
 		};
 
@@ -467,24 +467,27 @@ var towerFactory=(function(){
 			this.ready=1;
 		}
 		game.funLib.extend(sprite,bul);
-		bul.prototype.follow=function(obj,that){
+		bul.prototype.follow=function(obj,tower){
 			this.ready=0;
+            var that=this;
 			this.followTo(obj,function(){
-					obj.injure(20);
+					obj.injure(that.power);
 					this.angle=that.angle;
-					this.setCenter(that.centerX,that.centerY);
+					this.setCenter(tower.centerX,tower.centerY);
 					this.ready=1;
 			},true);
 		}
 		function bul1(){
 			bul.call(this,3,3);
-			this.speed=200;
+			this.speed=800;
+            this.power=10;
 		}
 		game.funLib.extend(bul,bul1);
 
 		function bul2(){
 			bul.call(this,5,10);
-			this.speed=100;
+			this.speed=200;
+            this.power=20;
 		}
 		game.funLib.extend(bul,bul2);
 
@@ -507,7 +510,7 @@ var towerFactory=(function(){
 			function tour(){
 				for(var i in monsterList){
 					var tempM=monsterList[i];
-					var space=getSpace(tempM.offsetX,tempM.offsetY,that.offsetX,that.offsetY);	
+					var space=getSpace(tempM.offsetX,tempM.offsetY,that.offsetX,that.offsetY)-tempM.width/2;	
 					if(!(space>that.hitSpace)){
 						that.hitGoal=tempM;
 						that.faceTo(tempM);
@@ -557,7 +560,7 @@ var towerFactory=(function(){
 			this.upgradeMoney=[20,50];
 			this.saleMoney=[10,20];
 			this.setCenter(x,y);
-			this.hitSpace=130;
+			this.hitSpace=60;
 			this.hitGoal=null;
 			this.tour();
 			this.initBul(new bul1());
@@ -580,7 +583,7 @@ var towerFactory=(function(){
 			this.upgradeMoney=[10,20];
 			this.saleMoney=[5,10];
 			this.setCenter(x,y);
-			this.hitSpace=100;
+			this.hitSpace=50;
 			this.hitGoal=null;
 			this.tour();
 			this.initBul(new bul2());
@@ -860,7 +863,7 @@ var towerCreateDiv=(function(){
 
 		function cTowerA(){
 			cTower.call(this);
-			this.pay=30;
+			this.pay=20;
 			this.type="towerA"
 			this.reUI();
 			this.setCenter(0,-10);
@@ -880,7 +883,7 @@ var towerCreateDiv=(function(){
 		}
 		function cTowerB(){
 			cTower.call(this,40,40);
-			this.pay=20;
+			this.pay=30;
 			this.type="towerB"
 			this.reUI();
 			this.setCenter(45,-10);
@@ -920,11 +923,12 @@ var towerCreateDiv=(function(){
 })();
 
 var main=(function(){
-	var _money=50,
+	var _money=90,
 		_moneyDiv,
 		_fpsDiv;
 	var _orderForm=[
-		["gwB","gwA","gwA"],
+		["gwA","gwA","gwA"],
+		["gwB","gwB","gwB"],
 		["gwB","gwB","gwB","gwA"],
 		["gwB","gwA","gwB","gwB","gwA"],
 		["gwB","gwB","gwB","gwA","gwB","gwA","gwA"],
@@ -940,6 +944,7 @@ var main=(function(){
 	return {
 		setDiv:function(json){
 			_moneyDiv=json.moneyDiv;
+		    _moneyDiv.text(_money);
 			_fpsDiv=json.fpsDiv;
 		},
 		showFPS:function(no){
