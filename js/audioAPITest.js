@@ -6,11 +6,17 @@ function init(){
         request1.responseType = 'arraybuffer';
         request1.onload=function(buffer){
             context.decodeAudioData(request1.response, function(buffer) {
+                var gainNode=context.createGainNode();
+                    gainNode.connect(context.destination);
+                        gainNode.gain.value=0.5;
                 var source1=context.createBufferSource();
+                console.dir(buffer);
                     source1.buffer=buffer;
-                    source1.connect(context.destination);
-                    source1.loop=0;
-                   // source1.noteOn(1);
+                    source1.connect(gainNode);
+                     gainNode.connect(context.destination);
+                   source1.noteOn(0);
+
+                   console.log("cc");
             }, function(){console.log("fefe")});
         };
         request1.send();
@@ -21,9 +27,6 @@ function init(){
             context.decodeAudioData(request.response, function(buffer) {
                 var ary=buffer.getChannelData(0);
 
-                var gainNode=context.createGainNode();
-                    gainNode.connect(context.destination);
-                        gainNode.gain.value=0.8;
                         //gainNode.gain.linearRampToValueAtTime(0.5,3);
                         //gainNode.gain.linearRampToValueAtTime(0,4);
                         /*
