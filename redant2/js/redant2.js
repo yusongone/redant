@@ -11,7 +11,7 @@
     _page.Animation=(function(){
         var _handlerList=[];
         var _Event={
-            _call:function(action,arg){
+            _fire:function(action,arg){
                 if(_Event[action]){
                     for(var i in _Event[action]){
                         _Event[action][i].apply(this,arg);
@@ -20,9 +20,11 @@
             }
         };
         function _getFrame(){
+            _Event._fire("frameStart");
             for(var i= 0,l=_handlerList.length;i<l;i++){
                 _handlerList[i]();
             }
+            _Event._fire("frameEnd");
             window.requestAnimationFrame(function(){
                 _getFrame();
             });
@@ -31,7 +33,7 @@
         return {
             run:function(){
                 _getFrame();
-                _Event._call("run")
+                _Event._fire("run")
             },
             on:function(action,handler){
                 if(!_Event[action]){
@@ -49,25 +51,67 @@
     _page.Scene=(function(){
         var _SpriteList=[];
         var _ctx=null;
+        var _canvas=null;
+        var _scale={x:1,y:1};
+
+
+        //
+        var _Event={
+            _fire:function(action,arg){
+                if(_Event[action]){
+                    for(var i in _Event[action]){
+                        _Event[action][i].apply(this,arg);
+                    }
+                }
+            }
+        };
 
 
         function _Sprite(){
-            this._child=[];
+            var self=this;
+            self._child=[];
         }
         _Sprite.prototype.test=function(child){
             alert(this.name+"abcd");
         };
-        _Sprite.prototype.supper=function(childSprite){
+        _Sprite.prototype.supper=function(option){
             _Sprite();
-            _SpriteList.push(this);
+            var self=this;
+            self.x=option.x;
+            self.y=option.y;
+            self.width=option.width;
+            self.height=option.height;
+            var _handlers={
+                _fire:function(action,arg){
+                    if(_handlers[action]){
+                        for(var i= 0,l=_handlers[action].length;i<l;i++){
+                            _handlers[action][i].apply(self,arg);
+                        }
+                    }
+                }
+            };
+            self._handlers=_handlers;
+            _SpriteList.push(self);
         };
         _Sprite.prototype.addChild=function(childSprite){
             this._child.push(childSprite);
         };
-        _Sprite.prototype.moveTo=function(){
-
-        }
-
+        _Sprite.prototype.moveTo=function(x,y,time){
+            this.x=x;
+            this.y=y;
+        };
+        _Sprite.prototype.fire=function(action,arg){
+            this._handlers._fire(action,arg);
+        };
+        _Sprite.prototype.on=function(action,handler){
+            if(!this._handlers[action]){
+                this._handlers[action]=[];
+            }
+            this._handlers[action].push(handler);
+        };
+        _Sprite.prototype.click=function(handler){
+            this.on("click",handler);
+        };
         _Sprite.extend=function(child){
             child.extend=this;
             var temp=function(){};
@@ -82,22 +126,115 @@
             }
         });
 
+        _page.Animation.on("frameStart",function(){
+            _ctx.clearRect(0,0,_canvas.width,_canvas.height);
+        });
+
         _page.Animation.onFrame(function(){
             for(var i= 0,l=_SpriteList.length;i<l;i++){
                 _SpriteList[i].draw(_ctx);
             }
-        })
+        });
 
         function _init(json){
-            var canvas=document.createElement("canvas");
-            document.getElementById(json.canvasBox).appendChild(canvas);
-            _ctx=canvas.getContext("2d");
+            _canvas=document.createElement("canvas");
+            document.getElementById(json.canvasBox).appendChild(_canvas);
+
+            var _height=window.innerHeight;
+            var _width=window.innerWidth;
+            _canvas.width=_width;
+            _canvas.height=_height;
+
+            window.cc=_canvas;
+
+            _ctx=_canvas.getContext("2d");
+            _reParseMapScale();
+            _bindEvent();
         };
+
+        function _getMapVisualSize(){
+            return {
+                width:_canvas.clientWidth,
+                height:_canvas.clientHeight
+            }
+        };
+
+        function _getMapNatrueSize(){
+            return{
+                width:_canvas.width,
+                height:_canvas.height
+            }
+        };
+
+        function _reParseMapScale(){
+            var _x=_getMapVisualSize().width/_getMapNatrueSize().width;
+            var _y=_getMapVisualSize().height/_getMapNatrueSize().height;
+            _scale.x=_x;
+            _scale.y=_y;
+        }
+
+        function _toNatrueCoord(_x,_y){
+            return {
+                x:_x/_scale.x,
+                y:_y/_scale.y
+            }
+        };
+
+        function _checkOver(coord,Sprite){
+            if(2*Math.abs(coord.x-Sprite.x)<Sprite.width&&2*Math.abs(coord.y-Sprite.y)<Sprite.height){
+                return true;
+            }else{
+                return false;
+            }
+        };
+
+        function _checkHit(coord,Sprite){
+
+        }
+
+        function _bindEvent(){
+            window.addEventListener("resize",function(){
+                _reParseMapScale();
+            },false);
+
+
+            _canvas.addEventListener("click",function(event){
+
+                var _redantEvent={};
+                    var coord=_toNatrueCoord(event.offsetX,event.offsetY);
+                    _redantEvent.x=coord.x;
+                    _redantEvent.y=coord.y;
+                    _redantEvent.originEvent=event;
+                    _redantEvent._stop=false;
+                    _redantEvent.shutup=function(){
+                        _redantEvent._stop=true;
+                    };
+
+                    //check click sprite;
+                    for(i=_SpriteList.length-1;i>-1;i--){
+                        var _bool=_checkOver(_redantEvent,_SpriteList[i]);
+                        if(_bool){
+                            _SpriteList[i].fire("click",[_redantEvent]);
+                            if(_redantEvent._stop){
+                               return;
+                            }
+                        }
+                    };
+
+                return _Event._fire("click",[_redantEvent])
+            },false);
+        }
 
 
         return{
             Sprite:_Sprite,
-            init:_init
+            init:_init,
+            on:function(action,handler){
+                if(!_Event[action]){
+                    _Event[action]=[];
+                };
+                _Event[action].push(handler)
+            },
         }
     })();
 

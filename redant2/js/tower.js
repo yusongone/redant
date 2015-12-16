@@ -33,29 +33,29 @@ function MAIN_FUNCTION(){
  */
 
 (function(){
-    function Monster(name){
-        this.supper();
+    function Monster(x,y,w,h,name){
+        this.supper({
+            x:x,
+            y:y,
+            width:w,
+            height:h
+        });
         this.name=name;
-        this.x=0;
-        this.y=0;
+        this._attr={};
     };
     R.Scene.Sprite.extend(Monster);
-
-
-    Monster.prototype.update=function(timestamp){
-
-    };
 
     /* overwrite */
     Monster.prototype.draw=function(_ctx){
         _ctx.beginPath();
-        _ctx.rect(1,1,10,10);
+        _ctx.rect(this.x-this.width/2,this.y-this.height/2,this.width,this.height);
         _ctx.closePath();
-        _ctx.stroke();
+        _ctx.fillStyle=this._attr.background||"#ddd";
+        _ctx.fill();
     };
-
-
-
+    Monster.prototype.setAttr=function(key,val){
+        this._attr[key]=val;
+    }
 
     Page.MonsterFactory={
         init:function(){
@@ -63,12 +63,26 @@ function MAIN_FUNCTION(){
                 "canvasBox":"page"
             });
 
-            var m=new Monster(1);
-            m.moveTo(10,10,100);
+            var m2=new Monster(120,120,40,40,"b");
+            m2.setAttr("background","green");
+            m2.click(function(rEvent){
+                rEvent.shutup();
+                console.log(this.name);
+            });
 
+            var m=new Monster(100,100,40,40,"a");
+            m.setAttr("background","red");
+            m.click(function(rEvent){
+                rEvent.shutup();
+                console.log(this.name);
+            });
+
+            R.Scene.on("click",function(rEvent){
+                console.log("scene clicked");
+                m.moveTo(rEvent.x,rEvent.y);
+            });
 
             R.Animation.run();
         }
-
     }
 })();
