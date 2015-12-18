@@ -37,7 +37,27 @@
             });
         }
 
+        var _Frame=(function(){
+            function Frame(_handler){
+                this._runStatus=false;
+                var self=this;
+                this.handler=function(){
+                    if(self._runStatus){
+                       _handler.apply(this,arguments);
+                    }
+                }
+            }
+            Frame.prototype.run=function(){
+                this._runStatus=true;
+            }
+            Frame.prototype.stop=function(){
+                this._runStatus=false;
+            }
+            return Frame;
+        })();
+
         return {
+            Frame:_Frame,
             run:function(){
                 _getFrame();
                 _Event._fire("run")
@@ -51,13 +71,17 @@
             bindFrameHandler:function(handler){
                 _handlerList.push(handler);
             },
-            removeFrameHandler:function(handler){
+            indexOf:function(fun){
                 for(var i= 0,l=_handlerList.length;i<l;i++){
-                    if(_handlerList[i]==handler){
-                        _handlerList.splice(i,1);
-                       return;
+                    if(_handlerList[i]==fun){
+                        return i;
                     };
                 }
+                return -1;
+            },
+            removeFrameHandler:function(handler){
+                var index=this.indexOf(handler);
+                _handlerList.splice(index,1);
             }
         }
     })();
@@ -83,25 +107,6 @@
 
 
 
-        // Sprite private funciton
-        function _nextPosition(usedTime){
-            var self=this;
-            var al=Math.PI*2*(self.moveDir/360);
-            var x=Math.sin(al)*self.speed*usedTime/1000;
-            var y=-Math.cos(al)*self.speed*usedTime/1000;
-            return {"x":self.x+x,"y":self.y+y}
-        };
-        function _isPassCoord(x,y){
-            var self=this;
-            var ox=self.x,oy=self.y,px=self.oldX,py=self.oldY;
-            var Vx=(ox-x)*(px-x)<0;
-            var Vy=(oy-y)*(py-y)<0;
-            var inC=(oy-py)==oy-y&&(ox-px)==ox-x;
-            if(Vx||Vy||inC){
-                return true;
-            };
-            return false;
-        }
         function _createSpriteCanvas(){
             var self=this;
             var tempCanvas=document.createElement("canvas");
@@ -132,6 +137,7 @@
             self.speed=300;
             self.moveDir=0;
             self.faceDir=0;
+            self._runStatus=false;
             _createSpriteCanvas.call(this);
             var _handlers={
                 _fire:function(action,arg){
@@ -147,33 +153,32 @@
             _SpriteList.push(self);
             self.draw();
         };
-        _Sprite.prototype.addChild=function(childSprite){
-            this._child.push(childSprite);
-        };
-        _Sprite.prototype.moveTo=function(target){
+        _Sprite.prototype.isCrossCoord=function(x,y){
             var self=this;
-            self._moveHandler?R.Animation.removeFrameHandler(self._moveHandler):"";
-            self._moveHandler=function(useTime){
-                var x=target.x,y=target.y;
-                self.moveDir=R.commonTools.getAngle(self.x,self.y,x,y);
-                var d=_nextPosition.call(self,useTime);
-                self.oldX=self.x;
-                self.oldY=self.y;
-                self.x= d.x;
-                self.y= d.y;
-                if(_isPassCoord.call(self,x,y)){
-                    R.Animation.removeFrameHandler(self._moveHandler)
-                    self._moveHandler=null;
-                    self.x= x;
-                    self.y= y;
-                    self.oldX=self.x;
-                    self.oldY=self.y;
-                }
-                return;
-            }
-            R.Animation.bindFrameHandler(self._moveHandler);
+            var ox=self.x,oy=self.y,px=self.oldX,py=self.oldY;
+            var Vx=(ox-x)*(px-x)<0;
+            var Vy=(oy-y)*(py-y)<0;
+            var inC=(oy-py)==oy-y&&(ox-px)==ox-x;
+            if(Vx||Vy||inC){
+                return true;
+            };
+            return false;
+        }
+        _Sprite.prototype.hide=function(Frame){
+            this._hide=true;
+        }
+        _Sprite.prototype.show=function(Frame){
+            this._hide=false;
+        }
+        // Sprite private funciton
+        _Sprite.prototype.nextStepPosition=function(usedTime){
+            var self=this;
+            var al=Math.PI*2*(self.moveDir/360);
+            var x=Math.sin(al)*self.speed*usedTime/1000;
+            var y=-Math.cos(al)*self.speed*usedTime/1000;
+            return {"x":self.x+x,"y":self.y+y}
         };
-        _Sprite.prototype.fire=function(action,arg){
+        _Sprite.prototype._fire=function(action,arg){
             this._handlers._fire(action,arg);
         };
         _Sprite.prototype.on=function(action,handler){
@@ -182,6 +187,10 @@
             }
             this._handlers[action].push(handler);
         };
+        _Sprite.prototype.setUpdateFrame=function(Frame){
+            this.Frame=Frame;
+            this.update=Frame.handler;
+        }
         _Sprite.prototype.click=function(handler){
             this.on("click",handler);
         };
@@ -206,7 +215,10 @@
         _page.Animation.bindFrameHandler(function(useTime){
             for(var i= 0,l=_SpriteList.length;i<l;i++){
                 var sp= _SpriteList[i];
-                    sp.update&&typeof(sp.update)=="function"?sp.update():"";
+                sp.update&&typeof(sp.update)=="function"?sp.update.call(sp,useTime):"";
+                if(sp._hide){
+                    continue;
+                }
                 _ctx.save();
                 _ctx.translate(sp.x,sp.y);
                 _ctx.rotate(Math.PI*2/360*sp.faceDir);
@@ -266,23 +278,69 @@
             }
         };
 
-        function _checkHit(coord,Sprite){
-
-        }
 
         function _bindEvent(){
             window.addEventListener("resize",function(){
                 _reParseMapScale();
             },false);
+            var Keyboard={
+                press:{
+                    length:0
+                },
+            };
 
+            document.addEventListener("keyup",function(evt){
+                var code=evt.keyCode;
+                if(Keyboard.press[code]) {
+                    --Keyboard.press.length;
+                    delete Keyboard.press[code];
+                }
+                _Event._fire("keyChange",[Keyboard]);
+            });
 
-            _canvas.addEventListener("click",function(event){
+            document.addEventListener("keydown",function(evt){
+                var code=evt.keyCode;
+                if(!Keyboard.press[code]){
+                    ++Keyboard.press.length;
+                }
+                Keyboard.press[code]=code;
 
+                _Event._fire("keyChange",[Keyboard]);
+            });
+            _canvas.addEventListener("mousemove",function(evt){
                 var _redantEvent={};
-                    var coord=_toNatrueCoord(event.offsetX,event.offsetY);
+                var coord=_toNatrueCoord(evt.offsetX,evt.offsetY);
                     _redantEvent.x=coord.x;
                     _redantEvent.y=coord.y;
-                    _redantEvent.originEvent=event;
+                    _redantEvent.originEvent=evt;
+                    _redantEvent._stop=false;
+                    _redantEvent.shutup=function(){
+                        _redantEvent._stop=true;
+                    };
+
+                //check click sprite;
+                for(i=_SpriteList.length-1;i>-1;i--){
+                    var _bool=_checkOver(_redantEvent,_SpriteList[i]);
+                    if(_bool){
+                        if(_SpriteList[i]._hide){
+                            continue;
+                        }
+                        _SpriteList[i]._fire("mousemove",[_redantEvent]);
+                        if(_redantEvent._stop){
+                            return;
+                        }
+                    }
+                };
+                return _Event._fire("mousemove",[_redantEvent]);
+
+            },false);
+
+            _canvas.addEventListener("click",function(evt){
+                var _redantEvent={};
+                    var coord=_toNatrueCoord(evt.offsetX,evt.offsetY);
+                    _redantEvent.x=coord.x;
+                    _redantEvent.y=coord.y;
+                    _redantEvent.originEvent=evt;
                     _redantEvent._stop=false;
                     _redantEvent.shutup=function(){
                         _redantEvent._stop=true;
@@ -292,7 +350,10 @@
                     for(i=_SpriteList.length-1;i>-1;i--){
                         var _bool=_checkOver(_redantEvent,_SpriteList[i]);
                         if(_bool){
-                            _SpriteList[i].fire("click",[_redantEvent]);
+                            if(_SpriteList[i]._hide){
+                               continue;
+                            }
+                            _SpriteList[i]._fire("click",[_redantEvent]);
                             if(_redantEvent._stop){
                                return;
                             }
@@ -412,7 +473,7 @@
             }
         }
     })();
-    _page.commonTools=(function(){
+    _page.CommonTools=(function(){
         //get a random num;
         var _randomJson={};
         function _getRandom(b,bool){
@@ -449,6 +510,19 @@
             var space=Math.sqrt(powX+powY);
             return space;
         }
+        function _checkHit(Sprite,Sprite2){
+            var x=Sprite.x;
+            var y=Sprite.x;
+            var tempHeight=(Sprite.height+Sprite2.height)/2;
+            var tempWidth=(Sprite.width+Sprite2.width)/2;
+            var subWidth=Math.abs(x-Sprite2.x)-tempWidth;
+            var subHeight=Math.abs(y-Sprite2.y)-tempHeight;
+            if(subWidth<0&&subHeight<0||Sprite.isCrossCoord(Sprite2.x,Sprite2.y)){
+                return true;
+            }else{
+                return false;
+            };
+        };
         function _findObj(parentObj,subObj,fun){
             var l=parentObj.length;
             for(var i=0;i<l;i++){
@@ -465,6 +539,7 @@
             ,getAngle:_getAngle
             ,selectArrayByObj:_findObj
             ,getSpaceBetweenDoubleCoord:_getSpaceBetweenDoubleCoord
+            ,checkHit:_checkHit
         };
     })();
 
