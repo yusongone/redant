@@ -20,8 +20,9 @@ var pen=(function(){
     var pathStatus;
     function makeSVG(tag, attrs) {
         var el= document.createElementNS('http://www.w3.org/2000/svg', tag);
-        for (var k in attrs)
+        for (var k in attrs){
             el.setAttribute(k, attrs[k]);
+	}
         return el;
     }
     function _getAngle(x1,y1,x2,y2){
@@ -43,7 +44,7 @@ var pen=(function(){
         this.firstPoint;
         this.prevPoint;
         this.hover=function(){
-            console.log("fdddfdfdf");
+            console.log("hover");
         }
     };
     path.prototype.addPoint=function(pos){

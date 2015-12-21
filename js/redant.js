@@ -183,8 +183,11 @@ var game=window.game||(function(){
                 var source=context.createBufferSource();
                     source.connect(context.destination);
                     	source.buffer=this.soundBuffer[name];
-                //   		source.start(0);
-                        source.noteOn(1);
+                        if(source.noteOn){
+				source.noteOn(1)
+			}else{
+                   		source.start(0);
+			};
 		};
 		_sprite.prototype.setAudio=function(name,soundBuffer){
 				this.soundBuffer[name]=soundBuffer;
